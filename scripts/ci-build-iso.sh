@@ -9,25 +9,14 @@ echo "==> Disabling GPG signature verification for CI (Docker has no entropy sou
 sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /etc/pacman.conf
 sed -i 's/^LocalFileSigLevel\s*=.*/LocalFileSigLevel = Never/' /etc/pacman.conf
 
-echo "==> Creating CachyOS mirrorlist files..."
+echo "==> Creating CachyOS mirrorlist file..."
 mkdir -p /etc/pacman.d
-# Main CachyOS mirror
 cat > /etc/pacman.d/cachyos-mirrorlist << 'EOF'
 Server = https://mirror.cachyos.org/repo/$arch/$repo
 EOF
-# v3/v4 mirrors (for AVX2/AVX512 repos — point to main mirror as fallback)
-cat > /etc/pacman.d/cachyos-v3-mirrorlist << 'EOF'
-Server = https://mirror.cachyos.org/repo/$arch/$repo
-EOF
-cat > /etc/pacman.d/cachyos-v4-mirrorlist << 'EOF'
-Server = https://mirror.cachyos.org/repo/$arch/$repo
-EOF
 
-echo "==> Adding CachyOS repositories to host pacman.conf..."
+echo "==> Adding CachyOS repository to host pacman.conf..."
 cat >> /etc/pacman.conf << 'EOF'
-
-[cachyos-v3]
-Include = /etc/pacman.d/cachyos-v3-mirrorlist
 
 [cachyos]
 Include = /etc/pacman.d/cachyos-mirrorlist

@@ -130,35 +130,20 @@ libsecret
 # === BLUETOOTH ===
 bluez
 bluez-utils
-blueberry
+blueman
 
 # === PRIVACY TOOLS ===
 tailscale
 tor
 torsocks
-obfs4proxy
-snowflake-pt
 nyx
 wireguard-tools
 openvpn
 networkmanager-openvpn
-networkmanager-wireguard
 dnscrypt-proxy
 nftables
 iptables-nft
 macchanger
 
-# === AUR HELPERS (pre-built) ===
-yay
-paru
-
 # === INSTALLER ===
-calamares
-calamares-config-edex-os
-
-# === EDEX-DE ===
-edex-de
-
-# === OS SETTINGS ===
-edex-os-settings
-edex-os-branding
+cachyos-calamares

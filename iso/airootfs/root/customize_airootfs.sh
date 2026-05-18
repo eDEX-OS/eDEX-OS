@@ -20,7 +20,23 @@ ExecStart=
 ExecStart=-/sbin/agetty -o '-p -f -- \u' --noclear --autologin liveuser %I $TERM
 EOF
 
-# Enable services
+# ── Install yay (pre-built release binary) ───────────────────────────────────
+YAY_VER="12.4.2"
+YAY_URL="https://github.com/Jguer/yay/releases/download/v${YAY_VER}/yay_${YAY_VER}_x86_64.tar.gz"
+curl -fsSL "$YAY_URL" -o /tmp/yay.tar.gz
+tar -xzf /tmp/yay.tar.gz -C /tmp
+install -Dm755 "/tmp/yay_${YAY_VER}_x86_64/yay" /usr/bin/yay
+rm -rf /tmp/yay.tar.gz "/tmp/yay_${YAY_VER}_x86_64"
+
+# ── Install paru (pre-built release binary) ──────────────────────────────────
+PARU_VER="2.0.4"
+PARU_URL="https://github.com/Morganamilo/paru/releases/download/v${PARU_VER}/paru-v${PARU_VER}-x86_64.tar.zst"
+curl -fsSL "$PARU_URL" -o /tmp/paru.tar.zst
+tar --use-compress-program=unzstd -xf /tmp/paru.tar.zst -C /tmp
+install -Dm755 /tmp/paru /usr/bin/paru
+rm -f /tmp/paru.tar.zst /tmp/paru
+
+# ── Enable services ──────────────────────────────────────────────────────────
 systemctl enable seatd
 systemctl enable NetworkManager
 systemctl enable bluetooth
