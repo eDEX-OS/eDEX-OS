@@ -8,11 +8,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-iso:
-    name: Build ISO
-    # Requires self-hosted Arch/CachyOS runner labeled 'arch-linux'
-    # See README.md for runner setup instructions
-    runs-on: [self-hosted, arch-linux]
+  # ── Job 1: Build eDEX-DE binary on ubuntu-latest ─────────────────────────────
+  build-de:
+    name: Build eDEX-DE binary
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout with submodules
@@ -24,53 +23,103 @@ jobs:
       - name: Pull latest submodule
         run: git submodule update --remote --recursive
 
-      - name: Install archiso
-        run: sudo pacman -S --needed --noconfirm archiso
-
-      - name: Bootstrap CachyOS repos (if not present)
+      - name: Install system dependencies
         run: |
-          if ! pacman-conf -l | grep -q cachyos; then
-            sudo pacman-key --recv-keys F3B607488DB35A47 --keyserver keyserver.ubuntu.com
-            sudo pacman-key --lsign-key F3B607488DB35A47
-            sudo pacman -U --noconfirm \
-              'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-keyring-3-1-any.pkg.tar.zst' \
-              'https://mirror.cachyos.org/repo/x86_64/cachyos/cachyos-mirrorlist-18-1-any.pkg.tar.zst'
-          fi
-
-      - name: Install build dependencies
-        run: |
-          sudo pacman -S --needed --noconfirm \
-            nodejs npm base-devel \
-            webkit2gtk-4.1 gtk3 libayatana-appindicator patchelf
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            lld \
+            llvm \
+            libasound2-dev
 
       - name: Install Rust
-        run: |
-          if ! command -v rustc &>/dev/null; then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
-            source "$HOME/.cargo/env"
-          fi
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Build eDEX-DE
-        run: bash scripts/build-de.sh
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install JS dependencies
+        run: cd desktop && npm ci
+
+      - name: Build Tauri app
+        run: cd desktop && npm run tauri build
+
+      - name: Upload DE binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: edex-de-binary
+          path: desktop/src-tauri/target/release/edex-de
+          if-no-files-found: error
+          retention-days: 1
+
+  # ── Job 2: Build ISO inside privileged Arch Linux Docker container ────────────
+  build-iso:
+    name: Build ISO
+    needs: build-de
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      iso_name: ${{ steps.version.outputs.iso_name }}
+
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Pull latest submodule
+        run: git submodule update --remote --recursive
+
+      - name: Download eDEX-DE binary
+        uses: actions/download-artifact@v4
+        with:
+          name: edex-de-binary
+          path: iso/airootfs/usr/bin/
+
+      - name: Set binary executable
+        run: chmod +x iso/airootfs/usr/bin/edex-de
 
       - name: Determine ISO version
         id: version
         run: |
           VERSION=$(date +%Y.%m.%d)
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            VERSION="${{ github.ref_name }}"
-            VERSION="${VERSION#v}"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
           fi
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "iso_name=eDEX-OS-x86_64-${VERSION}.iso" >> "$GITHUB_OUTPUT"
 
-      - name: Build ISO
+      - name: Ensure loop module loaded on host
+        run: sudo modprobe loop
+
+      - name: Build ISO in Arch Linux container
         run: |
-          sudo bash buildiso.sh
-          ISO_FILE=$(ls out/*.iso | head -1)
-          NEW_NAME="out/${{ steps.version.outputs.iso_name }}"
-          [[ "$ISO_FILE" != "$NEW_NAME" ]] && sudo mv "$ISO_FILE" "$NEW_NAME" || true
+          docker run --rm --privileged \
+            --device /dev/fuse \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            archlinux:latest \
+            bash /workspace/scripts/ci-build-iso.sh
+
+      - name: Rename ISO to versioned name
+        run: |
+          ISO=$(ls out/*.iso 2>/dev/null | head -1)
+          NEW="out/${{ steps.version.outputs.iso_name }}"
+          [[ -n "$ISO" && "$ISO" != "$NEW" ]] && mv "$ISO" "$NEW" || true
 
       - name: Generate checksums
         run: |
@@ -106,8 +155,9 @@ jobs:
 
       - name: Clean up work directory
         if: always()
-        run: sudo rm -rf /tmp/edex-os-work
+        run: rm -rf /tmp/edex-os-work
 
+  # ── Job 3: Create GitHub Release on tag push ──────────────────────────────────
   release:
     name: Create GitHub Release
     needs: build-iso
@@ -123,7 +173,7 @@ jobs:
       - name: Download ISO artifact
         uses: actions/download-artifact@v4
         with:
-          name: edex-os-iso-${{ github.ref_name }}
+          name: edex-os-iso-${{ needs.build-iso.outputs.version }}
           path: out/
 
       - name: Create Release
