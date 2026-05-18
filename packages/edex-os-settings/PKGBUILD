@@ -1,0 +1,40 @@
+# Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
+pkgname=edex-os-settings
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="eDEX-OS system privacy settings, configurations, and scripts"
+arch=('any')
+url="https://github.com/eDEX-OS/eDEX-OS"
+license=('GPL3')
+depends=(
+    'nftables'
+    'dnscrypt-proxy'
+    'tor'
+    'networkmanager'
+    'polkit'
+)
+backup=(
+    'etc/sysctl.d/99-edex-privacy.conf'
+    'etc/NetworkManager/conf.d/99-edex-privacy.conf'
+    'etc/dnscrypt-proxy/dnscrypt-proxy.toml'
+    'etc/tor/torrc'
+    'etc/nftables.conf'
+)
+source=("git+https://github.com/eDEX-OS/eDEX-OS.git")
+sha256sums=('SKIP')
+
+package() {
+    cd "${srcdir}/eDEX-OS/system-settings"
+    cp -r etc "${pkgdir}/"
+    cp -r usr "${pkgdir}/"
+    chmod 755 "${pkgdir}/usr/bin/edex-tor-mode"
+}
+
+post_install() {
+    sysctl --system
+    systemctl daemon-reload
+}
+
+post_upgrade() {
+    post_install
+}

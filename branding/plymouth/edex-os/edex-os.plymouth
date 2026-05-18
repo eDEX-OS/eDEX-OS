@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=eDEX-OS
+Description=eDEX-OS boot splash — sci-fi tron aesthetic
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/edex-os
+ScriptFile=/usr/share/plymouth/themes/edex-os/edex-os.script

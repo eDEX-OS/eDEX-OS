@@ -1,0 +1,25 @@
+# eDEX-OS GRUB Theme
+title-text: "eDEX-OS"
+title-color: "#00e5ff"
+title-font: "Unifont Regular 18"
+desktop-color: "#000000"
+message-color: "#00e5ff"
+message-bg-color: "#00000000"
+terminal-font: "Unifont Regular 14"
+terminal-border: "0"
+
++ boot_menu {
+  left = 30%
+  top = 25%
+  width = 40%
+  height = 55%
+  item_font = "Unifont Regular 14"
+  item_color = "#00e5ff88"
+  selected_item_color = "#000000"
+  selected_item_bg_color = "#00e5ff"
+  item_height = 32
+  item_padding = 10
+  item_spacing = 4
+  scrollbar_width = 4
+  scrollbar_thumb_color = "#00e5ff"
+}

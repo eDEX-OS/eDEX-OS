@@ -1,0 +1,8 @@
+/* Allow wheel group to run edex-tor-mode via pkexec */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/bin/edex-tor-mode" &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

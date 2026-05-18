@@ -1,0 +1,32 @@
+---
+componentName: edex-os
+
+welcomeStyleCalamares: false
+welcomeExpandingLogo: true
+
+strings:
+  productName:          "eDEX-OS"
+  shortProductName:     "eDEX-OS"
+  version:              "Rolling"
+  shortVersion:         "Rolling"
+  versionedName:        "eDEX-OS Rolling"
+  shortVersionedName:   "eDEX-OS"
+  bootloaderEntryName:  "eDEX-OS"
+  productUrl:           "https://github.com/eDEX-OS/eDEX-OS"
+  supportUrl:           "https://github.com/eDEX-OS/eDEX-OS/issues"
+  knownIssuesUrl:       "https://github.com/eDEX-OS/eDEX-OS/issues"
+  releaseNotesUrl:      "https://github.com/eDEX-OS/eDEX-OS/releases"
+
+images:
+  productLogo:    "logo.png"
+  productIcon:    "icon.png"
+  productWelcome: "welcome.png"
+
+slideshow: "show.qml"
+slideshowAPI: 2
+
+style:
+  sidebarBackground:    "#000000"
+  sidebarText:          "#00e5ff"
+  sidebarTextSelect:    "#000000"
+  sidebarTextHighlight: "#00e5ff"

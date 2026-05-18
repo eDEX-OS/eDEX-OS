@@ -1,0 +1,17 @@
+# Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
+pkgname=calamares-config-edex-os
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Calamares installer configuration for eDEX-OS"
+arch=('any')
+url="https://github.com/eDEX-OS/eDEX-OS"
+license=('GPL3')
+depends=('calamares' 'edex-os-branding')
+source=("git+https://github.com/eDEX-OS/eDEX-OS.git")
+sha256sums=('SKIP')
+
+package() {
+    cd "${srcdir}/eDEX-OS/calamares"
+    cp -r etc "${pkgdir}/"
+    [[ -d usr ]] && cp -r usr "${pkgdir}/"
+}

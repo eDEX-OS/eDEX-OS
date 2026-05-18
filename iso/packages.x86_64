@@ -1,0 +1,164 @@
+# === BASE SYSTEM ===
+base
+base-devel
+linux-cachyos
+linux-cachyos-headers
+linux-firmware
+linux-firmware-whence
+mkinitcpio
+mkinitcpio-archiso
+mkinitcpio-nfs-utils
+intel-ucode
+amd-ucode
+
+# === CACHYOS TOOLS ===
+cachyos-keyring
+cachyos-mirrorlist
+cachyos-settings
+cachyos-hooks
+chwd
+cachyos-rate-mirrors
+
+# === BOOTLOADER ===
+grub
+efibootmgr
+os-prober
+syslinux
+memtest86+
+memtest86+-efi
+
+# === FILESYSTEM TOOLS ===
+btrfs-progs
+dosfstools
+e2fsprogs
+exfatprogs
+f2fs-tools
+jfsutils
+ntfs-3g
+xfsprogs
+gptfdisk
+parted
+lvm2
+mdadm
+cryptsetup
+
+# === NETWORK BASE ===
+networkmanager
+network-manager-applet
+nm-connection-editor
+iwd
+dhcpcd
+openssh
+curl
+wget
+rsync
+
+# === WAYLAND / HYPRLAND STACK ===
+hyprland
+hyprpaper
+hyprlock
+hypridle
+xdg-desktop-portal-hyprland
+xdg-desktop-portal-gtk
+waybar
+wofi
+dunst
+swww
+grim
+slurp
+wl-clipboard
+wl-clip-persist
+cliphist
+
+# === AUDIO ===
+pipewire
+pipewire-alsa
+pipewire-jack
+pipewire-pulse
+wireplumber
+pavucontrol
+playerctl
+
+# === XDG / PORTAL ===
+xdg-utils
+xdg-user-dirs
+desktop-file-utils
+shared-mime-info
+
+# === DISPLAY / THEMES ===
+qt5-wayland
+qt6-wayland
+gtk3
+gtk4
+noto-fonts
+noto-fonts-emoji
+ttf-jetbrains-mono-nerd
+ttf-nerd-fonts-symbols
+
+# === TERMINAL / SHELL ===
+kitty
+fish
+zsh
+starship
+tmux
+
+# === SYSTEM UTILITIES ===
+polkit
+polkit-qt6
+polkit-gnome
+upower
+udisks2
+gvfs
+gvfs-mtp
+nemo
+nemo-fileroller
+file-roller
+p7zip
+unrar
+htop
+btop
+fastfetch
+man-db
+man-pages
+
+# === SECURITY / AUTH ===
+fprintd
+libfprint
+gnome-keyring
+libsecret
+
+# === BLUETOOTH ===
+bluez
+bluez-utils
+blueberry
+
+# === PRIVACY TOOLS ===
+tailscale
+tor
+torsocks
+obfs4proxy
+snowflake-pt
+nyx
+wireguard-tools
+openvpn
+networkmanager-openvpn
+networkmanager-wireguard
+dnscrypt-proxy
+nftables
+iptables-nft
+macchanger
+
+# === AUR HELPERS (pre-built) ===
+yay
+paru
+
+# === INSTALLER ===
+calamares
+calamares-config-edex-os
+
+# === EDEX-DE ===
+edex-de
+
+# === OS SETTINGS ===
+edex-os-settings
+edex-os-branding

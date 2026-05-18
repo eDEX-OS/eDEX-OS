@@ -1,0 +1,7 @@
+/* Allow wheel group to manage NetworkManager connections (VPN import, connect/disconnect) */
+polkit.addRule(function(action, subject) {
+    if (action.id.indexOf("org.freedesktop.NetworkManager.") == 0 &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

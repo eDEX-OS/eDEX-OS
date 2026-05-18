@@ -1,0 +1,23 @@
+# Build outputs
+out/
+*.iso
+*.iso.sha256
+*.iso.sha512
+
+# Rust/Tauri build
+desktop/src-tauri/target/
+desktop/node_modules/
+desktop/ui/node_modules/
+
+# Calamares build artifacts
+*.pyc
+__pycache__/
+
+# Archiso work dir
+/tmp/edex-os-work/
+
+# Keys (AUR SSH key pair)
+aur
+aur.pub
+*.key
+*.pem

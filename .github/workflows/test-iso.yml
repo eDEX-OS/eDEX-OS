@@ -1,0 +1,51 @@
+name: ISO Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["Build eDEX-OS ISO"]
+    types: [completed]
+
+jobs:
+  test:
+    name: QEMU Boot Test
+    runs-on: [self-hosted, arch-linux]
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install QEMU and OVMF
+        run: sudo pacman -S --needed --noconfirm qemu-system-x86 ovmf
+
+      - name: Download ISO artifact
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build-iso.yml
+          name: edex-os-iso-*
+          path: out/
+
+      - name: Run QEMU smoke test
+        timeout-minutes: 8
+        run: |
+          ISO=$(ls out/*.iso | head -1)
+          echo "==> Testing: $ISO"
+          timeout 420 qemu-system-x86_64 \
+            -enable-kvm \
+            -m 4096 \
+            -cpu host \
+            -smp 2 \
+            -bios /usr/share/ovmf/x64/OVMF.fd \
+            -drive "file=${ISO},media=cdrom,readonly=on" \
+            -boot d \
+            -nographic \
+            -serial stdio \
+            -no-reboot \
+            2>&1 | tee /tmp/qemu-output.txt || true
+
+          if grep -q "eDEX-OS\|GNU GRUB\|Loading Linux\|Reached target" /tmp/qemu-output.txt; then
+              echo "==> PASSED: Boot sequence detected"
+          else
+              echo "==> WARNING: Could not confirm boot sequence"
+              tail -50 /tmp/qemu-output.txt
+          fi

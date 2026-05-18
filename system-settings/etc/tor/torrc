@@ -1,0 +1,17 @@
+# eDEX-OS Tor base configuration
+# Mode switching is handled by edex-tor-mode script (called from eDEX-DE UI via pkexec)
+
+SocksPort 9050
+ControlPort 9051
+CookieAuthentication 1
+CookieAuthFileGroupReadable 1
+DataDirectory /var/lib/tor
+Log notice syslog
+
+# Transparent proxy ports (activated by: pkexec edex-tor-mode transparent)
+# TransPort 9040
+# DNSPort 5353
+# AutomapHostsOnResolve 1
+
+# Include dynamic configs (bridges, mode-specific settings added by eDEX-DE)
+%include /etc/tor/torrc.d/*.conf

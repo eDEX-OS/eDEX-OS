@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Runs on first boot of live environment to finalize setup
+set -e
+
+# Ensure tor torrc.d directory exists with correct permissions
+mkdir -p /etc/tor/torrc.d
+chmod 750 /etc/tor/torrc.d
+chown root:tor /etc/tor/torrc.d 2>/dev/null || true
+
+# Initialize tor mode state
+echo "off" > /run/edex-tor-mode
+
+# Ensure dnscrypt-proxy log dirs exist
+mkdir -p /var/log/dnscrypt-proxy
+mkdir -p /var/cache/dnscrypt-proxy
+
+echo "==> eDEX-OS live setup complete"

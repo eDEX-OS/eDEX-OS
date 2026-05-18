@@ -1,0 +1,13 @@
+[Unit]
+Description=eDEX-OS Live Environment Setup
+After=network.target
+ConditionPathExists=!/var/lib/edex-os-setup-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/edex-setup-live
+ExecStartPost=/usr/bin/touch /var/lib/edex-os-setup-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

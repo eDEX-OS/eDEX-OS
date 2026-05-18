@@ -1,0 +1,64 @@
+name: Build eDEX-DE
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/build-de.yml'
+  pull_request:
+    paths:
+      - 'desktop/**'
+
+jobs:
+  build:
+    name: Build eDEX-DE (Tauri)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            lld \
+            llvm
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      - name: Install JS dependencies
+        run: cd desktop && npm ci
+
+      - name: Build Tauri app
+        run: cd desktop && npm run tauri build
+
+      - name: Upload DE binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: edex-de-binary
+          path: |
+            desktop/src-tauri/target/release/edex-de
+            desktop/src-tauri/target/release/bundle/
+          retention-days: 7

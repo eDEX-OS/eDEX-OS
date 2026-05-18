@@ -1,0 +1,29 @@
+name: Validate PKGBUILDs
+
+on:
+  push:
+    paths:
+      - 'packages/**'
+  pull_request:
+    paths:
+      - 'packages/**'
+
+jobs:
+  validate:
+    name: namcap PKGBUILD check
+    runs-on: [self-hosted, arch-linux]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install namcap
+        run: sudo pacman -S --needed --noconfirm namcap
+
+      - name: Validate PKGBUILDs
+        run: |
+          failed=0
+          for pkg in packages/*/PKGBUILD; do
+              echo "==> Checking: $pkg"
+              namcap "$pkg" || failed=1
+          done
+          exit $failed

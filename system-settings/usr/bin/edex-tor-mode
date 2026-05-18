@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# edex-tor-mode — eDEX-OS Tor mode switcher
+# Called as root via: pkexec edex-tor-mode [off|socks5|transparent]
+# State file: /run/edex-tor-mode
+
+set -euo pipefail
+
+MODE="${1:-}"
+STATE_FILE="/run/edex-tor-mode"
+TORRC_MODE_DIR="/etc/tor/torrc.d"
+TORRC_TRANSPARENT="${TORRC_MODE_DIR}/transparent.conf"
+
+# Validate mode argument
+if [[ "$MODE" != "off" && "$MODE" != "socks5" && "$MODE" != "transparent" ]]; then
+    echo "Usage: edex-tor-mode [off|socks5|transparent]" >&2
+    exit 1
+fi
+
+flush_transparent_proxy() {
+    nft delete table ip tor-transparent 2>/dev/null || true
+    nft delete table ip6 tor-transparent 2>/dev/null || true
+    rm -f "${TORRC_TRANSPARENT}"
+}
+
+apply_transparent_proxy() {
+    local TOR_UID
+    TOR_UID=$(id -u tor 2>/dev/null || getent passwd tor | cut -d: -f3 || echo "")
+
+    if [[ -z "$TOR_UID" ]]; then
+        echo "[edex-tor-mode] ERROR: tor user not found" >&2
+        exit 1
+    fi
+
+    # Write torrc transparent proxy config
+    mkdir -p "${TORRC_MODE_DIR}"
+    cat > "${TORRC_TRANSPARENT}" <<TORRC
+TransPort 9040 IsolateClientAddr IsolateClientProtocol IsolateDestAddr IsolateDestPort
+DNSPort 5353
+AutomapHostsOnResolve 1
+TORRC
+    chmod 640 "${TORRC_TRANSPARENT}"
+    chown root:tor "${TORRC_TRANSPARENT}" 2>/dev/null || true
+
+    # Apply nftables transparent proxy rules
+    nft -f - <<NFT
+table ip tor-transparent {
+    chain prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
+
+        # Exclude tor process traffic
+        meta skuid ${TOR_UID} return
+
+        # Exclude RFC1918 / loopback destinations
+        ip daddr 127.0.0.0/8 return
+        ip daddr 10.0.0.0/8 return
+        ip daddr 172.16.0.0/12 return
+        ip daddr 192.168.0.0/16 return
+
+        # Redirect DNS to tor DNSPort
+        udp dport 53 redirect to :5353
+        tcp dport 53 redirect to :5353
+
+        # Redirect all TCP to tor TransPort
+        ip protocol tcp redirect to :9040
+    }
+
+    chain output {
+        type nat hook output priority filter; policy accept;
+
+        # Exclude tor process
+        meta skuid ${TOR_UID} return
+
+        # Exclude loopback
+        ip daddr 127.0.0.0/8 return
+
+        # Redirect DNS
+        udp dport 53 redirect to :5353
+        tcp dport 53 redirect to :5353
+
+        # Redirect TCP
+        ip protocol tcp redirect to :9040
+    }
+}
+NFT
+}
+
+case "$MODE" in
+    off)
+        flush_transparent_proxy
+        systemctl stop tor 2>/dev/null || true
+        echo "off" > "${STATE_FILE}"
+        echo "[edex-tor-mode] Tor stopped."
+        ;;
+
+    socks5)
+        flush_transparent_proxy
+        systemctl start tor
+        sleep 1
+        echo "socks5" > "${STATE_FILE}"
+        echo "[edex-tor-mode] Tor SOCKS5 mode active on 127.0.0.1:9050"
+        ;;
+
+    transparent)
+        flush_transparent_proxy
+        systemctl start tor
+        sleep 2
+        apply_transparent_proxy
+        systemctl reload-or-restart tor
+        sleep 1
+        echo "transparent" > "${STATE_FILE}"
+        echo "[edex-tor-mode] Tor transparent proxy active."
+        ;;
+esac
+
+exit 0
