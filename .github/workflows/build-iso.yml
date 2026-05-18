@@ -21,6 +21,9 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Pull latest submodule
+        run: git submodule update --remote --recursive
+
       - name: Install archiso
         run: sudo pacman -S --needed --noconfirm archiso
 
