@@ -29,9 +29,11 @@ jobs:
         uses: dawidd6/action-download-artifact@v3
         with:
           workflow: build-iso.yml
-          name: edex-os-iso-*
+          name: edex-os-iso-.*
+          name_is_regexp: true
           path: out/
           allow_forks: false
+          workflow_conclusion: success
 
       - name: Run QEMU smoke test
         timeout-minutes: 8
