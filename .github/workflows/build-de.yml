@@ -60,6 +60,5 @@ jobs:
         with:
           name: edex-de-binary
           path: |
-            desktop/src-tauri/target/release/edex-de
             desktop/src-tauri/target/release/bundle/
           retention-days: 7
