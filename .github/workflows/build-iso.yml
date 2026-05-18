@@ -133,6 +133,9 @@ jobs:
             archlinux:latest \
             bash /workspace/scripts/ci-build-iso.sh
 
+      - name: Fix output directory permissions
+        run: sudo chown -R "$USER:$USER" out/
+
       - name: Rename ISO to versioned name
         run: |
           ISO=$(ls out/*.iso 2>/dev/null | head -1)
