@@ -37,7 +37,8 @@ echo "==> Updating system and installing build tools..."
 pacman -Sy --noconfirm
 pacman -S --needed --noconfirm \
   base-devel git curl \
-  archiso squashfs-tools dosfstools mtools libisoburn
+  archiso squashfs-tools dosfstools mtools libisoburn \
+  grub syslinux
 
 echo "==> Patching ISO profile pacman.conf for CI (disable SigLevel)..."
 sed -i 's/^SigLevel\s*=.*/SigLevel = Never/' /workspace/iso/pacman.conf
