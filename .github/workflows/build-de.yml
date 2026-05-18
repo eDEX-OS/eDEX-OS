@@ -47,7 +47,7 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: desktop/src-tauri
+          workspaces: desktop -> desktop/target
 
       - name: Install JS dependencies
         run: cd desktop && npm ci
@@ -60,5 +60,5 @@ jobs:
         with:
           name: edex-de-binary
           path: |
-            desktop/src-tauri/target/release/bundle/
+            desktop/target/release/bundle/
           retention-days: 7

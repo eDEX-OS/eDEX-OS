@@ -49,7 +49,7 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: desktop/src-tauri
+          workspaces: desktop -> desktop/target
 
       - name: Install JS dependencies
         run: cd desktop && npm ci
@@ -60,19 +60,16 @@ jobs:
       - name: Find and stage DE binary
         id: find-bin
         run: |
-          echo "==> Searching target/release/ for executable binary..."
-          find desktop/src-tauri/target/release -maxdepth 1 -type f | while read f; do
-            [[ -x "$f" ]] && echo "  EXEC: $f"
-          done
-          # Expected path
-          BIN="desktop/src-tauri/target/release/edex-de"
-          if [[ ! -f "$BIN" ]]; then
-            # Fallback: find any non-library executable in target/release
-            BIN=$(find desktop/src-tauri/target/release -maxdepth 1 -type f -executable \
-              ! -name '*.so' ! -name '*.a' ! -name '*.d' 2>/dev/null | head -1)
-            echo "==> Fallback binary: $BIN"
+          # Tauri builds the binary at desktop/target/release/ (not src-tauri/target/)
+          BIN="desktop/target/release/edex-de"
+          if [[ -f "$BIN" ]]; then
+            echo "==> Found binary at: $BIN"
           else
-            echo "==> Found expected binary: $BIN"
+            echo "==> Expected path not found, searching..."
+            find desktop/target/release -maxdepth 1 -type f -executable 2>/dev/null | sort
+            BIN=$(find desktop/target/release -maxdepth 1 -type f -executable \
+              ! -name '*.so' ! -name '*.a' ! -name '*.d' 2>/dev/null | head -1)
+            echo "==> Using fallback: $BIN"
           fi
           mkdir -p /tmp/edex-bin
           cp "$BIN" /tmp/edex-bin/edex-de
