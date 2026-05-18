@@ -57,11 +57,32 @@ jobs:
       - name: Build Tauri app
         run: cd desktop && npm run tauri build
 
+      - name: Find and stage DE binary
+        id: find-bin
+        run: |
+          echo "==> Searching target/release/ for executable binary..."
+          find desktop/src-tauri/target/release -maxdepth 1 -type f | while read f; do
+            [[ -x "$f" ]] && echo "  EXEC: $f"
+          done
+          # Expected path
+          BIN="desktop/src-tauri/target/release/edex-de"
+          if [[ ! -f "$BIN" ]]; then
+            # Fallback: find any non-library executable in target/release
+            BIN=$(find desktop/src-tauri/target/release -maxdepth 1 -type f -executable \
+              ! -name '*.so' ! -name '*.a' ! -name '*.d' 2>/dev/null | head -1)
+            echo "==> Fallback binary: $BIN"
+          else
+            echo "==> Found expected binary: $BIN"
+          fi
+          mkdir -p /tmp/edex-bin
+          cp "$BIN" /tmp/edex-bin/edex-de
+          echo "path=/tmp/edex-bin/edex-de" >> "$GITHUB_OUTPUT"
+
       - name: Upload DE binary
         uses: actions/upload-artifact@v4
         with:
           name: edex-de-binary
-          path: desktop/src-tauri/target/release/edex-de
+          path: /tmp/edex-bin/edex-de
           if-no-files-found: error
           retention-days: 1
 
