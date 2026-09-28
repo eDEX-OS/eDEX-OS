@@ -56,7 +56,9 @@ build_local() {
     cp "$ROOT/packages/$name"/*.install "$dir/" 2>/dev/null || true
     chown -R "$BUILDER" "$dir"
     msg "building $name"
-    (cd "$dir" && as_builder makepkg -s --noconfirm --skipchecksums -f --noprogressbar >/dev/null)
+    # Local packages are arch-independent config bundles: nothing to build, so dependency
+    # resolution (which would need the not-yet-published [edex-os] repo) is skipped.
+    (cd "$dir" && as_builder makepkg -d --noconfirm --skipchecksums -f --noprogressbar >/dev/null)
 }
 
 # 1. eDEX-DE from the submodule, with its own PKGBUILD.
@@ -100,6 +102,6 @@ done < "$ROOT/scripts/aur-packages.txt"
 
 # 4. Repository database.
 msg "creating [$REPO_NAME] repository in $OUT"
-rm -f "$OUT/$REPO_NAME".db* "$OUT/$REPO_NAME".files*
+rm -f "$OUT/$REPO_NAME".db* "$OUT/$REPO_NAME".files* "$OUT"/*-debug-*.pkg.tar.zst
 repo-add -q "$OUT/$REPO_NAME.db.tar.gz" "$OUT"/*.pkg.tar.zst
 ls -1 "$OUT"/*.pkg.tar.zst | sed 's|.*/||'
