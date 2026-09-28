@@ -91,6 +91,10 @@ build_local edex-os-live live
 # 3. Pinned AUR packages.
 while read -r name commit; do
     [ -z "$name" ] || [ "${name#\#}" != "$name" ] && continue
+    if ls "$OUT/$name"-*.pkg.tar.zst >/dev/null 2>&1 && [ "${EDEX_REBUILD_AUR:-0}" != 1 ]; then
+        msg "reusing AUR package $name already in $OUT (set EDEX_REBUILD_AUR=1 to rebuild)"
+        continue
+    fi
     dir="$WORK/aur-$name"
     if [ ! -d "$dir/.git" ]; then
         as_builder git clone -q "https://aur.archlinux.org/$name.git" "$dir"

@@ -34,9 +34,7 @@ rm -f /etc/sudoers.d/10-edex-live /etc/polkit-1/rules.d/49-edex-live.rules
 rm -rf /home/liveuser
 sed -i '/^liveuser:/d' /etc/passwd /etc/shadow 2>/dev/null || true
 sed -i 's/,liveuser$//; s/:liveuser,/:/; s/:liveuser$/:/' /etc/group /etc/gshadow 2>/dev/null || true
-if [ -f /etc/greetd/config.toml ] && grep -q liveuser /etc/greetd/config.toml; then
-    rm -f /etc/greetd/config.toml
-fi
+rm -f /etc/edex-os/greetd-live.toml
 
 echo "==> regenerating initramfs with the final hooks"
 mkinitcpio -P || true

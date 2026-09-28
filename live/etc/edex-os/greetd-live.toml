@@ -1,4 +1,4 @@
-# Live ISO: log the live user straight into eDEX-DE once; the eDEX greeter takes over afterwards.
+# Live ISO (/etc/edex-os/greetd-live.toml): log the live user straight into eDEX-DE once; the eDEX greeter takes over afterwards.
 [terminal]
 vt = 1
 
