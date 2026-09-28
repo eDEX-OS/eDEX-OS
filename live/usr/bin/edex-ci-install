@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Unattended installation for CI (edex.ci=install on the kernel command line): performs the same
+# steps as the Calamares exec sequence on the first disk, then powers off. Markers on the console:
+#   EDEX_CI: install-ok | install-fail
+set -euo pipefail
+OUT=/dev/console
+ROOT=/mnt/edex
+DISK=${EDEX_CI_DISK:-$(lsblk -dpno NAME,TYPE | awk '$2=="disk" && $1 !~ /loop|sr|zram/ {print $1; exit}')}
+fail() { echo "EDEX_CI: install-fail ($*)" > $OUT; exit 1; }
+trap 'fail "step failed at line $LINENO"' ERR
+[ -n "$DISK" ] || fail "no disk"
+echo "EDEX_CI: installing to $DISK" > $OUT
+
+# partition: GPT with BIOS boot partition, EFI, root (btrfs) — works for UEFI and BIOS boots.
+sgdisk --zap-all "$DISK" >/dev/null
+sgdisk -n1:0:+2M -t1:ef02 -n2:0:+512M -t2:ef00 -n3:0:0 -t3:8300 "$DISK" >/dev/null
+partprobe "$DISK"; sleep 2
+P=$DISK; case "$DISK" in *[0-9]) P="${DISK}p";; esac
+mkfs.fat -F32 "${P}2" >/dev/null
+mkfs.btrfs -f "${P}3" >/dev/null
+mount "${P}3" /mnt
+btrfs subvolume create /mnt/@ >/dev/null; btrfs subvolume create /mnt/@home >/dev/null
+btrfs subvolume create /mnt/@log >/dev/null; btrfs subvolume create /mnt/@cache >/dev/null
+umount /mnt
+mkdir -p "$ROOT"
+mount -o noatime,compress=zstd:3,subvol=@ "${P}3" "$ROOT"
+mkdir -p "$ROOT"/{home,var/log,var/cache,boot/efi}
+mount -o noatime,compress=zstd:3,subvol=@home "${P}3" "$ROOT/home"
+mount -o noatime,compress=zstd:3,subvol=@log "${P}3" "$ROOT/var/log"
+mount -o noatime,compress=zstd:3,subvol=@cache "${P}3" "$ROOT/var/cache"
+mount "${P}2" "$ROOT/boot/efi"
+
+# unpackfs
+unsquashfs -f -d "$ROOT" /run/archiso/bootmnt/arch/x86_64/airootfs.sfs >/dev/null
+cp /run/archiso/bootmnt/arch/boot/x86_64/vmlinuz-linux-cachyos "$ROOT/boot/"
+
+# machineid, fstab, locale, kernel step
+rm -f "$ROOT/etc/machine-id"; systemd-machine-id-setup --root="$ROOT" >/dev/null 2>&1 || true
+genfstab -U "$ROOT" > "$ROOT/etc/fstab"
+echo "edex-ci" > "$ROOT/etc/hostname"
+/usr/share/edex-os/install-steps/20-kernel.sh "$ROOT"
+
+# chroot steps: initramfs, user, services, bootloader, post-install
+for d in proc sys dev run; do mount --rbind "/$d" "$ROOT/$d"; mount --make-rslave "$ROOT/$d"; done
+[ -d /sys/firmware/efi/efivars ] && mount --bind /sys/firmware/efi/efivars "$ROOT/sys/firmware/efi/efivars" 2>/dev/null || true
+chroot "$ROOT" /bin/bash -e <<'CHROOT'
+mkinitcpio -P >/dev/null
+useradd -m -G wheel,video,audio,input,storage,network,rfkill,lp,tor -s /usr/bin/fish edex
+echo 'edex:edex' | chpasswd
+echo 'root:edex' | chpasswd
+echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel
+systemctl enable NetworkManager greetd tailscaled nftables dnscrypt-proxy.socket edex-tor-mode edex-tailscale-operator bluetooth power-profiles-daemon accounts-daemon systemd-timesyncd fstrim.timer >/dev/null 2>&1
+systemctl disable pacman-init edex-setup-live edex-ci-report edex-ci-install >/dev/null 2>&1 || true
+grub-install --target=i386-pc "$(lsblk -dpno PKNAME "$(findmnt -no SOURCE /boot/efi)" | head -1)" >/dev/null
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-OS --removable >/dev/null 2>&1 || true
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-OS --no-nvram >/dev/null 2>&1 || true
+printf 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 console=ttyS0,115200 console=tty0"\nGRUB_TIMEOUT=2\nGRUB_TERMINAL_OUTPUT="console serial"\nGRUB_SERIAL_COMMAND="serial --speed=115200"\n' > /etc/default/grub.d/99-ci.cfg
+grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1
+pacman -Rns --noconfirm edex-os-live edex-os-calamares-config cachyos-calamares mkinitcpio-archiso >/dev/null 2>&1 || true
+/usr/share/edex-os/install-steps/80-postinstall.sh >/dev/null
+# CI-only: report on the serial console once the greeter is up on the installed system.
+cat > /etc/systemd/system/edex-ci-installed.service <<'UNIT'
+[Unit]
+Description=eDEX-OS CI marker for the installed system
+After=graphical.target greetd.service
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'for i in $(seq 1 60); do systemctl is-active --quiet greetd && { echo "EDEX_CI: installed-ok" > /dev/console; exit 0; }; sleep 2; done; echo "EDEX_CI: installed-fail" > /dev/console; systemctl --no-pager status greetd > /dev/console; exit 1'
+[Install]
+WantedBy=graphical.target
+UNIT
+systemctl enable edex-ci-installed.service >/dev/null 2>&1
+CHROOT
+sync
+for d in run dev sys proc; do umount -R "$ROOT/$d" 2>/dev/null || true; done
+umount -R "$ROOT"
+echo "EDEX_CI: install-ok" > $OUT
+sleep 2
+systemctl poweroff

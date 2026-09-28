@@ -1,0 +1,3 @@
+enable edex-setup-live.service
+enable edex-ci-report.service
+enable edex-ci-install.service

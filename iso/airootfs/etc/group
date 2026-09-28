@@ -1,0 +1,12 @@
+root:x:0:root
+adm:x:4:liveuser
+wheel:x:998:liveuser
+audio:x:995:liveuser
+video:x:991:liveuser
+input:x:994:liveuser
+storage:x:988:liveuser
+network:x:990:liveuser
+rfkill:x:989:liveuser
+users:x:984:liveuser
+tor:x:43:liveuser
+liveuser:x:1000:

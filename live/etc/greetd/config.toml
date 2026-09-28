@@ -1,0 +1,11 @@
+# Live ISO: log the live user straight into eDEX-DE once; the eDEX greeter takes over afterwards.
+[terminal]
+vt = 1
+
+[initial_session]
+command = "edex-session"
+user = "liveuser"
+
+[default_session]
+command = "cage -s -- edex-greeter"
+user = "greeter"

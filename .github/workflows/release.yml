@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Build ISO"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: edex-os-iso
+          path: out/
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release notes from CHANGELOG
+        run: |
+          V="${{ github.event.workflow_run.head_branch }}"; V=${V#v}
+          awk -v v="$V" 'BEGIN{p=0} /^## /{p = index($0, v) > 0} p' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "eDEX-OS $V" > notes.md
+          printf '\n### Verify\n```\nsha256sum -c edex-os-x86_64-*.iso.sha256\n```\n' >> notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.workflow_run.head_branch }}
+          name: eDEX-OS ${{ github.event.workflow_run.head_branch }}
+          body_path: notes.md
+          prerelease: ${{ contains(github.event.workflow_run.head_branch, '-') }}
+          files: |
+            out/*.iso
+            out/*.sha256
+            out/*.sha512
+            out/*.asc
+            out/*.tar.gz

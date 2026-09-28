@@ -1,0 +1,8 @@
+# eDEX-OS greetd configuration (greetd.service runs with --config /etc/edex-os/greetd.toml).
+[terminal]
+vt = 1
+
+[default_session]
+# cage is a kiosk compositor: it fullscreens the greeter and nothing else can appear.
+command = "cage -s -- edex-greeter"
+user = "greeter"

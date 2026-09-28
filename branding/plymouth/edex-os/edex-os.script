@@ -1,31 +1,92 @@
-# eDEX-OS Plymouth boot animation
-# Cyan-on-black tron aesthetic
+// eDEX-OS Plymouth theme: logo, glowing progress bar, boot messages, LUKS password prompt.
+// Plymouth script API reference: https://www.freedesktop.org/wiki/Software/Plymouth/Scripts/
 
-Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
-Window.SetBackgroundBottomColor(0.0, 0.02, 0.02);
+Window.SetBackgroundTopColor(0.02, 0.04, 0.08);
+Window.SetBackgroundBottomColor(0.03, 0.05, 0.10);
 
-logo_image = Image("logo.png");
-logo_sprite = Sprite(logo_image);
-logo_sprite.SetX(Window.GetWidth() / 2 - logo_image.GetWidth() / 2);
-logo_sprite.SetY(Window.GetHeight() / 2 - logo_image.GetHeight() / 2 - 60);
+screen.w = Window.GetWidth();
+screen.h = Window.GetHeight();
 
-bar_width = 320;
-bar_height = 4;
-bar_x = Window.GetWidth() / 2 - bar_width / 2;
-bar_y = Window.GetHeight() / 2 + logo_image.GetHeight() / 2 + 20;
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.x = screen.w / 2 - logo.image.GetWidth() / 2;
+logo.y = screen.h / 2 - logo.image.GetHeight() / 2 - 50;
+logo.sprite.SetPosition(logo.x, logo.y, 10);
 
-progress_bar_sprite = Sprite();
-progress_bar_sprite.SetPosition(bar_x, bar_y, 0);
+bar.bg = Image("bar_bg.png");
+bar.fg = Image("bar.png");
+bar.x = screen.w / 2 - bar.bg.GetWidth() / 2;
+bar.y = logo.y + logo.image.GetHeight() + 40;
+bar.bg_sprite = Sprite(bar.bg);
+bar.bg_sprite.SetPosition(bar.x, bar.y, 5);
+bar.fg_sprite = Sprite();
+bar.fg_sprite.SetPosition(bar.x, bar.y, 6);
+bar.fg_sprite.SetImage(bar.fg.Scale(1, bar.fg.GetHeight()));
 
-fun BootProgressCallback(duration, progress) {
-    bar = Image.Scale(
-        Image.FromJpegData(
-            "P3\n1 1\n255\n0 229 255\n"
-        ),
-        Math.Int(bar_width * progress),
-        bar_height
-    );
-    progress_bar_sprite.SetImage(bar);
+title.image = Image.Text("eDEX-OS", 0.0, 0.83, 1.0, 1, "Sans Bold 22");
+title.sprite = Sprite(title.image);
+title.sprite.SetPosition(screen.w / 2 - title.image.GetWidth() / 2, bar.y + 20, 10);
+
+message.sprite = Sprite();
+message.sprite.SetPosition(0, bar.y + 60, 10);
+
+// Pulsing logo while the system boots.
+counter = 0;
+fun refresh_callback() {
+    counter++;
+    opacity = 0.75 + 0.25 * Math.Sin(counter / 12);
+    logo.sprite.SetOpacity(opacity);
 }
+Plymouth.SetRefreshFunction(refresh_callback);
 
-Plymouth.SetBootProgressFunction(BootProgressCallback);
+fun boot_progress_callback(duration, progress) {
+    width = Math.Int(bar.fg.GetWidth() * progress);
+    if (width < 1) width = 1;
+    bar.fg_sprite.SetImage(bar.fg.Scale(width, bar.fg.GetHeight()));
+}
+Plymouth.SetBootProgressFunction(boot_progress_callback);
+
+fun display_message_callback(text) {
+    message.image = Image.Text(text, 0.5, 0.8, 0.9, 1, "Sans 11");
+    message.sprite.SetImage(message.image);
+    message.sprite.SetX(screen.w / 2 - message.image.GetWidth() / 2);
+}
+fun hide_message_callback(text) {
+    message.sprite.SetImage(Image.Text("", 0, 0, 0));
+}
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetHideMessageFunction(hide_message_callback);
+
+// LUKS / password prompt.
+prompt.sprite = Sprite();
+prompt.sprite.SetPosition(0, bar.y + 90, 10);
+bullets.sprite = Sprite();
+bullets.sprite.SetPosition(0, bar.y + 120, 10);
+
+fun display_password_callback(prompt_text, bullet_count) {
+    if (prompt_text == "") prompt_text = "Enter passphrase";
+    prompt.image = Image.Text(prompt_text, 0.0, 0.83, 1.0, 1, "Sans 13");
+    prompt.sprite.SetImage(prompt.image);
+    prompt.sprite.SetX(screen.w / 2 - prompt.image.GetWidth() / 2);
+    dots = "";
+    for (i = 0; i < bullet_count; i++) dots += "•";
+    bullets.image = Image.Text(dots, 0.0, 0.83, 1.0, 1, "Sans 16");
+    bullets.sprite.SetImage(bullets.image);
+    bullets.sprite.SetX(screen.w / 2 - bullets.image.GetWidth() / 2);
+}
+fun display_normal_callback() {
+    prompt.sprite.SetImage(Image.Text("", 0, 0, 0));
+    bullets.sprite.SetImage(Image.Text("", 0, 0, 0));
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+fun display_question_callback(prompt_text, entry) {
+    display_password_callback(prompt_text + " " + entry, 0);
+}
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+
+fun quit_callback() {
+    logo.sprite.SetOpacity(1);
+}
+Plymouth.SetQuitFunction(quit_callback);

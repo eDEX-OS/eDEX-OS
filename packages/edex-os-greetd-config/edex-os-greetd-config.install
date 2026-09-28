@@ -1,0 +1,10 @@
+post_install() {
+    # Add fingerprint authentication to greetd's PAM stack (idempotent).
+    if [ -f /etc/pam.d/greetd ] && ! grep -q pam_fprintd /etc/pam.d/greetd; then
+        sed -i '0,/^auth/s//auth       sufficient   pam_fprintd.so max-tries=3 timeout=30\nauth/' /etc/pam.d/greetd
+    fi
+    systemctl daemon-reload >/dev/null 2>&1 || true
+}
+post_upgrade() {
+    post_install
+}

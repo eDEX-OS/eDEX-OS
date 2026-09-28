@@ -1,0 +1,8 @@
+/* The live user launches Calamares through pkexec without a password. */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/bin/calamares" &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

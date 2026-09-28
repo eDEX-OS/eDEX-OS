@@ -1,0 +1,13 @@
+# eDEX-OS Tor configuration (tor.service runs with -f /etc/edex-os/torrc).
+# Modes are switched by `edex-tor-mode`, bridges by `edex-tor-bridges`; both write into
+# /etc/tor/torrc.d/. Do not put mode-specific options here.
+User tor
+DataDirectory /var/lib/tor
+SocksPort 127.0.0.1:9050 IsolateDestAddr
+ControlPort 127.0.0.1:9051
+CookieAuthentication 1
+CookieAuthFile /run/tor/control.authcookie
+CookieAuthFileGroupReadable 1
+Log notice syslog
+ClientUseIPv6 1
+%include /etc/tor/torrc.d/

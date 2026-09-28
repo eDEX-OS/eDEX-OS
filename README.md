@@ -1,140 +1,102 @@
 # eDEX-OS
 
-A privacy-focused, performance-tuned Linux distribution based on [CachyOS](https://cachyos.org/) (Arch), featuring the [eDEX-DE](https://github.com/eDEX-OS/eDEX-DE) sci-fi Hyprland desktop environment.
+[![Build ISO](https://github.com/eDEX-OS/eDEX-OS/actions/workflows/build-iso.yml/badge.svg)](https://github.com/eDEX-OS/eDEX-OS/actions/workflows/build-iso.yml)
+[![Lint](https://github.com/eDEX-OS/eDEX-OS/actions/workflows/lint.yml/badge.svg)](https://github.com/eDEX-OS/eDEX-OS/actions/workflows/lint.yml)
 
-## Features
+A privacy-focused, performance-tuned Linux distribution based on [CachyOS](https://cachyos.org/) (Arch)
+whose desktop is [eDEX-DE](https://github.com/eDEX-OS/eDEX-DE): a Rust + wgpu sci-fi shell drawn on
+Hyprland, with a matching greetd login screen.
 
-- **linux-cachyos** kernel with BORE/EEVDF scheduler and x86-64-v3/v4 CPU-optimized packages
-- **eDEX-DE** — Tauri v2 + Hyprland sci-fi desktop with integrated Privacy Control Panel (`Ctrl+Shift+P`)
-- **Tor** — dual-mode: SOCKS5 proxy or full transparent proxy (off by default, switchable from DE)
-- **Tailscale** — mesh VPN with peer list, exit node selection, and login from DE
-- **WireGuard & OpenVPN** — import and manage VPN profiles via NetworkManager from DE
-- **dnscrypt-proxy** — DNS-over-HTTPS with DNSSEC enabled by default
-- **nftables** — hardened deny-inbound firewall baseline
-- **MAC address randomization** — per-connection via NetworkManager
-- **Calamares** — GUI installer (UEFI + BIOS, btrfs/ext4/xfs/f2fs, LUKS encryption)
-- **yay** and **paru** — both AUR helpers pre-installed
+## What is on the ISO
 
-## Repository Layout
+| Area | What you get |
+|---|---|
+| Kernel & packages | `linux-cachyos`; the installer enables the x86-64-v3/v4 CachyOS repositories your CPU supports |
+| Desktop | Hyprland 0.56 + eDEX-DE 3: terminal, file browser, dashboard, on-screen keyboard, launcher, 14-category settings, privacy panel, notifications, power menu, `edex-greeter` under `cage` |
+| Tor | `edex-tor-mode off / socks5 / transparent`: transparent mode redirects all TCP and DNS through Tor with a **fail-closed** nftables policy (LAN, DHCP and Tailscale excepted; `--strict` blocks Tailscale too) and rolls back if Tor cannot bootstrap; obfs4 (lyrebird) and Snowflake bridges |
+| Tailscale | pre-installed, your user is made the operator, exit nodes / LAN access / advertising from the privacy panel |
+| VPN | WireGuard and OpenVPN through NetworkManager |
+| DNS | dnscrypt-proxy (DNSSEC, no-log resolvers) is the system resolver; NetworkManager never rewrites `resolv.conf` |
+| Firewall | nftables `edex-filter`: inbound denied, Tailscale allowed, forwarding only for Tailscale exit-node use |
+| Privacy defaults | MAC randomisation, RFC 4941 IPv6 temporary addresses, no connectivity probes, kernel hardening sysctls |
+| Installer | Calamares (CachyOS build) with an eDEX-OS configuration: btrfs subvolumes, LUKS, GRUB (UEFI + BIOS), Plymouth, greetd, live bits removed |
+| Boot | GRUB (UEFI) and syslinux (BIOS) with eDEX themes, Plymouth splash, copy-to-RAM / safe-graphics / serial entries |
+| Extras | `yay`, `paru`, kitty, fish, nemo, pipewire, bluetooth, fprintd, power-profiles-daemon |
 
-```
-eDEX-OS/
-├── desktop/                    # git submodule → eDEX-OS/eDEX-DE
-├── iso/                        # archiso profile
-│   ├── profiledef.sh
-│   ├── packages.x86_64
-│   ├── pacman.conf             # CachyOS + Arch repos
-│   ├── grub/grub.cfg
-│   ├── efiboot/                # systemd-boot entries
-│   └── airootfs/               # live environment overlay
-├── calamares/                  # Calamares installer config
-│   └── etc/calamares/
-│       ├── settings.conf
-│       ├── branding/edex-os/   # logo, slideshow, colors
-│       └── modules/            # partition, users, services, etc.
-├── packages/                   # Custom PKGBUILDs
-│   ├── edex-os-settings/       # privacy configs + edex-tor-mode script
-│   ├── edex-os-branding/       # Plymouth, GRUB themes, wallpapers
-│   └── edex-os-calamares-config/
-├── system-settings/            # Source files for edex-os-settings package
-│   ├── etc/sysctl.d/           # kernel privacy hardening
-│   ├── etc/nftables.conf       # baseline firewall
-│   ├── etc/NetworkManager/     # MAC randomization
-│   ├── etc/dnscrypt-proxy/     # DoH config
-│   ├── etc/tor/                # torrc
-│   ├── etc/polkit-1/rules.d/   # pkexec rules for tor-mode + NM
-│   └── usr/bin/edex-tor-mode   # tor mode-switch script
-├── branding/                   # Source for edex-os-branding package
-│   ├── plymouth/edex-os/       # boot splash theme
-│   ├── grub/edex-os/           # GRUB theme
-│   └── wallpapers/
-├── buildiso.sh                 # ISO build wrapper (calls mkarchiso)
-├── scripts/
-│   ├── build-de.sh             # builds eDEX-DE binary from submodule
-│   └── test-iso.sh             # QEMU smoke test
-└── .github/workflows/
-    ├── build-de.yml            # Tauri build on GitHub-hosted runner
-    ├── build-iso.yml           # ISO build on self-hosted Arch runner
-    ├── test-iso.yml            # QEMU boot test
-    └── pkgbuild.yml            # PKGBUILD validation
-```
+Live medium: user `liveuser` (no password, passwordless sudo), root password `edex`. The desktop starts
+automatically; press the **INSTALL** button in the top bar, run `edex-install`, or pick "Install eDEX-OS"
+from the launcher.
 
-## Building
+## Build
 
-### Requirements
-
-- Arch Linux or CachyOS host (for ISO build)
-- `archiso` package
-- `rust`, `nodejs`, `npm` (for eDEX-DE)
-- `webkit2gtk-4.1`, `gtk3`, `libayatana-appindicator`, `patchelf` (Tauri deps)
+Everything is built from this checkout inside an `archlinux:latest` container: the packages (including
+eDEX-DE from the `desktop/` submodule and pinned AUR packages) go into a local `[edex-os]` repository,
+then `mkarchiso` builds the ISO.
 
 ```bash
-# Install build deps (Arch/CachyOS)
-sudo pacman -S --needed archiso rust nodejs npm webkit2gtk-4.1 gtk3 libayatana-appindicator patchelf
+git clone --recurse-submodules https://github.com/eDEX-OS/eDEX-OS.git && cd eDEX-OS
+docker run --rm --privileged --device /dev/fuse -v "$PWD:/workspace" -w /workspace archlinux:latest \
+    bash scripts/ci-build-iso.sh
+ls out/            # edex-os-*.iso + checksums, out/repo/ with the packages
 ```
 
-### Clone
+On a CachyOS/Arch host `./buildiso.sh` runs the same script with sudo. Needs about 12 GB of disk and
+network access to the Arch, CachyOS and AUR mirrors.
+
+## Test
 
 ```bash
-git clone --recurse-submodules https://github.com/eDEX-OS/eDEX-OS.git
-cd eDEX-OS
+scripts/lint.sh                     # shellcheck, yamllint, nft syntax, package list sanity
+scripts/test-iso.sh --mode both     # QEMU UEFI + BIOS boot: EDEX_CI: boot-ok / installer-ok / shell-ok
+scripts/test-install.sh             # unattended install to a virtual disk, then boot it UEFI + BIOS
+sudo tests/privacy/tor-mode-test.sh # on a live system: fail-closed policy, rollback, Tor exit check
 ```
 
-### Build eDEX-DE first
+CI runs all of these on every push (`build-iso.yml`), builds the packages on package changes
+(`packages.yml`), and publishes tagged builds with checksums (`release.yml`). `bump-desktop.yml` opens a
+pull request when eDEX-DE has a new release tag.
 
-```bash
-bash scripts/build-de.sh
+## Repository layout
+
+```
+desktop/                 git submodule → eDEX-OS/eDEX-DE (built into the edex-de package)
+iso/                     archiso profile: profiledef.sh, packages.x86_64, pacman.conf.in, airootfs/, grub/, syslinux/
+packages/                PKGBUILDs built from this tree (see packages/README.md)
+system-settings/         edex-os-settings: /etc/edex-os/{torrc,nftables.conf,dnscrypt-proxy.toml}, helpers, units, polkit
+live/                    edex-os-live: live autologin, live user setup, CI hooks
+calamares/               edex-os-calamares-config: /etc/edex-os/calamares, edex-install, install-steps/
+packaging/greetd/        edex-os-greetd-config
+branding/                src/*.svg → generated artwork (scripts/make-artwork.sh); Plymouth + GRUB themes
+scripts/                 ci-build-iso.sh, build-packages.sh, make-artwork.sh, test-iso.sh, test-install.sh, lint.sh
+tests/privacy/           nft lint and the live Tor-mode test
+docs/                    building, testing, architecture, installer, privacy
 ```
 
-### Build ISO
+## Privacy semantics
 
-```bash
-bash buildiso.sh
-# ISO output: out/eDEX-OS-x86_64-YYYY.MM.DD.iso
-```
+* **Tor off** (default): nothing is routed through Tor; `tor.service` is stopped.
+* **socks5**: Tor listens on `127.0.0.1:9050`; only applications configured to use it are anonymised.
+* **transparent**: `edex-tor-mode transparent` writes `/etc/tor/torrc.d/50-transparent.conf`, loads the
+  `inet edex-tor` table (TCP → TransPort 9040, DNS → DNSPort 5353, everything else dropped), waits for Tor
+  to bootstrap and rolls back to socks5 on timeout. The mode persists across reboots (`edex-tor-mode.service`
+  loads the drop policy *before* Tor starts, so there is no fail-open window). Tailscale keeps working unless
+  `--strict` is used; LAN and DHCP are always allowed.
+* Tailscale as an exit node forwards only through `tailscale0`; the baseline firewall never forwards
+  anything else.
+* DNS always goes to dnscrypt-proxy (or Tor's DNSPort in transparent mode); `/etc/resolv.conf` is a
+  symlink installed by tmpfiles and NetworkManager runs with `dns=none`.
 
-### Test in QEMU
+## Known limitations
 
-```bash
-bash scripts/test-iso.sh
-```
-
-## CI/CD
-
-ISO builds require a **self-hosted GitHub Actions runner** on an Arch/CachyOS system labeled `arch-linux`.
-
-```bash
-# On your build server, install required packages:
-sudo pacman -S --needed \
-  archiso calamares rust nodejs npm git base-devel \
-  webkit2gtk-4.1 gtk3 libayatana-appindicator patchelf \
-  qemu-system-x86 ovmf namcap
-```
-
-**Repository secrets required for release signing:**
-- `GPG_PRIVATE_KEY` — ASCII-armored GPG private key
-- `GPG_PASSPHRASE` — passphrase for the key
-
-## Privacy Control Panel
-
-Press `Ctrl+Shift+P` in eDEX-DE to open the Privacy Control Panel with three tabs:
-
-| Tab | Features |
-|-----|----------|
-| **TOR** | Mode selector (Off/SOCKS5/Transparent), bridge request & management |
-| **TAILSCALE** | Login, status, peer list, exit node selection |
-| **VPN** | WireGuard/OpenVPN connect/disconnect, WireGuard config import |
-
-## Tor Modes
-
-| Mode | Description |
-|------|-------------|
-| `off` | Tor not running |
-| `socks5` | Tor SOCKS5 proxy on `127.0.0.1:9050` |
-| `transparent` | All TCP/DNS redirected through Tor via nftables |
-
-Mode switching is done via `pkexec /usr/bin/edex-tor-mode <mode>` — no password prompt for `wheel` group members.
+* No Secure Boot (shim/MOK) support; disable Secure Boot or enrol your own keys.
+* NVIDIA: install `nvidia-open-dkms` after installation and add `nvidia_drm.modeset=1`; the live medium
+  uses the open-source stack (`nomodeset` entry available).
+* The installer is the CachyOS Calamares build; when CachyOS ships a Calamares linked against an older
+  boost than Arch, the boot test fails with `EDEX_CI: installer-broken` until CachyOS rebuilds it.
+* Tor transparent mode + Tailscale: Tailscale traffic bypasses Tor by design (WireGuard cannot go through
+  Tor); use `--strict` if that matters.
+* ARM images and X11 sessions are out of scope.
 
 ## License
 
-GPL-3.0 — see [LICENSE](LICENSE)
+GPL-3.0. eDEX-OS is not affiliated with CachyOS or Arch Linux.

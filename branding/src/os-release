@@ -1,0 +1,11 @@
+NAME="eDEX-OS"
+PRETTY_NAME="eDEX-OS"
+ID=edex-os
+ID_LIKE="cachyos arch"
+BUILD_ID=rolling
+ANSI_COLOR="38;2;0;212;255"
+HOME_URL="https://github.com/eDEX-OS/eDEX-OS"
+DOCUMENTATION_URL="https://github.com/eDEX-OS/eDEX-OS/tree/main/docs"
+SUPPORT_URL="https://github.com/eDEX-OS/eDEX-OS/issues"
+BUG_REPORT_URL="https://github.com/eDEX-OS/eDEX-OS/issues"
+LOGO=edex-os

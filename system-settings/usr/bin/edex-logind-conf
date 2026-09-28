@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# edex-logind-conf lid <suspend|ignore|lock|poweroff|hibernate> — set the lid-close action.
+set -euo pipefail
+[ "$(id -u)" -eq 0 ] || { echo "must run as root" >&2; exit 1; }
+[ "${1:-}" = "lid" ] || { echo "usage: edex-logind-conf lid <action>" >&2; exit 2; }
+case "${2:-}" in
+    suspend|ignore|lock|poweroff|hibernate) ;;
+    *) echo "invalid lid action: ${2:-}" >&2; exit 2 ;;
+esac
+mkdir -p /etc/systemd/logind.conf.d
+cat > /etc/systemd/logind.conf.d/50-edex.conf <<CONF
+# Written by edex-logind-conf
+[Login]
+HandleLidSwitch=$2
+HandleLidSwitchExternalPower=$2
+HandleLidSwitchDocked=ignore
+CONF
+systemctl kill -s HUP systemd-logind 2>/dev/null || true
+echo "lid: $2"

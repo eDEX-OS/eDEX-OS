@@ -1,17 +1,24 @@
 # Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
-pkgname=calamares-config-edex-os
+pkgname=edex-os-calamares-config
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="Calamares installer configuration for eDEX-OS"
+pkgdesc="Calamares installer configuration for eDEX-OS (live ISO only)"
 arch=('any')
 url="https://github.com/eDEX-OS/eDEX-OS"
-license=('GPL3')
-depends=('calamares' 'edex-os-branding')
-source=("git+https://github.com/eDEX-OS/eDEX-OS.git")
+license=('GPL-3.0-only')
+depends=('calamares' 'edex-os-branding' 'edex-os-settings' 'polkit' 'arch-install-scripts')
+source=("$pkgname-$pkgver.tar")
 sha256sums=('SKIP')
 
 package() {
-    cd "${srcdir}/eDEX-OS/calamares"
-    cp -r etc "${pkgdir}/"
-    [[ -d usr ]] && cp -r usr "${pkgdir}/"
+    cd "$srcdir/$pkgname-$pkgver"
+    install -dm755 "$pkgdir/etc/edex-os"
+    cp -a calamares "$pkgdir/etc/edex-os/calamares"
+    # `calamares -c DIR` expects the QML modules next to settings.conf.
+    ln -s /usr/share/calamares/qml "$pkgdir/etc/edex-os/calamares/qml"
+    install -Dm755 bin/edex-install "$pkgdir/usr/bin/edex-install"
+    install -Dm644 edex-install.desktop "$pkgdir/usr/share/applications/edex-install.desktop"
+    install -Dm644 50-edex-install.rules "$pkgdir/usr/share/polkit-1/rules.d/50-edex-install.rules"
+    install -dm755 "$pkgdir/usr/share/edex-os/install-steps"
+    install -m755 install-steps/*.sh "$pkgdir/usr/share/edex-os/install-steps/"
 }

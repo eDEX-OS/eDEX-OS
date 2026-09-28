@@ -1,0 +1,14 @@
+[Unit]
+Description=eDEX-OS unattended CI installation to the first disk
+After=graphical.target network-online.target
+Wants=network-online.target
+ConditionKernelCommandLine=edex.ci=install
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/edex-ci-install
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=graphical.target

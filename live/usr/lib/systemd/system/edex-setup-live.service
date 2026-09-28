@@ -1,0 +1,14 @@
+[Unit]
+Description=eDEX-OS live environment setup
+DefaultDependencies=no
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=greetd.service display-manager.service
+ConditionPathExists=/run/archiso
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/edex-setup-live
+
+[Install]
+WantedBy=multi-user.target

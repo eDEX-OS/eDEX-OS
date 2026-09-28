@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# First-boot setup of the live environment (edex-setup-live.service).
+set -euo pipefail
+HOME_DIR=/home/liveuser
+if [ ! -e "$HOME_DIR/.config/hypr/hyprland.lua" ]; then
+    mkdir -p "$HOME_DIR"
+    cp -rT /etc/skel "$HOME_DIR"
+fi
+mkdir -p "$HOME_DIR/Desktop"
+cp -f /usr/share/applications/edex-install.desktop "$HOME_DIR/Desktop/" 2>/dev/null || true
+chown -R liveuser:liveuser "$HOME_DIR"
+# Tor is off until the user turns it on from the privacy panel.
+mkdir -p /var/lib/edex-os
+echo off > /var/lib/edex-os/tor-mode
+echo off > /run/edex-tor-mode
+echo "eDEX-OS live setup complete"

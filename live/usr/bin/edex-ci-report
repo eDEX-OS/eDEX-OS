@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Print machine-readable boot markers on the serial console for scripts/test-iso.sh.
+#   EDEX_CI: boot-ok    graphical.target reached
+#   EDEX_CI: shell-ok   the eDEX-DE canvas layer surface exists in Hyprland
+#   EDEX_CI: shell-fail the shell did not appear within the timeout
+set -u
+out=/dev/console
+echo "EDEX_CI: boot-ok" > $out
+# The installer must be runnable (catches upstream library mismatches in cachyos-calamares).
+if ldd /usr/bin/calamares 2>/dev/null | grep -q "not found"; then
+    echo "EDEX_CI: installer-broken" > $out
+    ldd /usr/bin/calamares | grep "not found" > $out
+else
+    echo "EDEX_CI: installer-ok" > $out
+fi
+for _ in $(seq 1 90); do
+    sig=$(ls /run/user/1000/hypr 2>/dev/null | head -1 || true)
+    if [ -n "$sig" ]; then
+        if runuser -u liveuser -- env HYPRLAND_INSTANCE_SIGNATURE="$sig" XDG_RUNTIME_DIR=/run/user/1000 hyprctl -j layers 2>/dev/null | grep -q 'edex-de:canvas'; then
+            echo "EDEX_CI: shell-ok" > $out
+            runuser -u liveuser -- env XDG_RUNTIME_DIR=/run/user/1000 edex-de ipc state 2>/dev/null | head -c 2000 > $out || true
+            exit 0
+        fi
+    fi
+    sleep 2
+done
+echo "EDEX_CI: shell-fail" > $out
+journalctl --user -M liveuser@ -u edex-de --no-pager 2>/dev/null | tail -40 > $out || true
+journalctl -b --no-pager 2>/dev/null | grep -iE "hyprland|edex|greetd" | tail -40 > $out || true
+exit 1

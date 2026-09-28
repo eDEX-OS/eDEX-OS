@@ -1,0 +1,9 @@
+# mkinitcpio preset file for the 'linux-cachyos' package on the eDEX-OS live medium.
+# The installer replaces this with the stock preset (see calamares/install-steps).
+
+PRESETS=('archiso')
+
+ALL_kver='/boot/vmlinuz-linux-cachyos'
+archiso_config='/etc/mkinitcpio.conf.d/archiso.conf'
+
+archiso_image="/boot/initramfs-linux-cachyos.img"

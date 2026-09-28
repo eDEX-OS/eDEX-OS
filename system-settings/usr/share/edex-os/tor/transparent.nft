@@ -1,0 +1,43 @@
+#!/usr/bin/nft -f
+# eDEX-OS Tor transparent mode. Loaded by `edex-tor-mode transparent` with @TOR_UID@ substituted and,
+# in --strict mode, the Tailscale exemptions removed. Everything that is not Tor itself, loopback,
+# the LAN, DHCP or Tailscale is redirected into Tor (TCP, DNS) or DROPPED: the machine fails closed.
+
+define tor_uid = @TOR_UID@
+define tailscale_mark = 0x80000
+
+table inet edex-tor
+delete table inet edex-tor
+
+table inet edex-tor {
+    set lan4 {
+        type ipv4_addr
+        flags interval
+        elements = { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16, 100.64.0.0/10 }
+    }
+
+    chain nat_output {
+        type nat hook output priority dstnat; policy accept;
+        meta skuid $tor_uid return
+        # @TAILSCALE@ meta mark & 0xff0000 == $tailscale_mark return
+        # @TAILSCALE@ oifname "tailscale0" return
+        # DNS goes to Tor's DNSPort, even queries aimed at the local dnscrypt resolver.
+        meta l4proto { tcp, udp } th dport 53 redirect to :5353
+        oifname "lo" return
+        # Addresses Tor mapped for .onion names (VirtualAddrNetworkIPv4) must reach the TransPort.
+        ip daddr 10.192.0.0/10 meta l4proto tcp redirect to :9040
+        ip daddr @lan4 return
+        meta l4proto tcp redirect to :9040
+    }
+
+    chain filter_output {
+        type filter hook output priority filter; policy drop;
+        meta skuid $tor_uid accept
+        # @TAILSCALE@ meta mark & 0xff0000 == $tailscale_mark accept
+        # @TAILSCALE@ oifname "tailscale0" accept
+        oifname "lo" accept
+        ip daddr @lan4 accept
+        udp dport { 67, 68 } accept
+        # Everything else (UDP, ICMP, un-redirected IPv6, ...) would bypass Tor: drop it.
+    }
+}

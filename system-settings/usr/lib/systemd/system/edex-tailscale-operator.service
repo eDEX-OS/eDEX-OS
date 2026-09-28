@@ -1,0 +1,11 @@
+[Unit]
+Description=Grant the primary user control over tailscaled
+After=tailscaled.service
+Requires=tailscaled.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/edex-tailscale-operator
+
+[Install]
+WantedBy=multi-user.target

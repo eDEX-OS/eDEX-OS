@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# edex-tailscale-operator [user] — let a user drive tailscaled without root (tailscale set --operator).
+# Without an argument (boot service) the first regular login user is used.
+set -euo pipefail
+[ "$(id -u)" -eq 0 ] || { echo "must run as root" >&2; exit 1; }
+user=${1:-}
+if [ -z "$user" ]; then
+    user=$(getent passwd | awk -F: '$3 >= 1000 && $3 < 60000 && $7 !~ /nologin|false/ { print $1; exit }')
+fi
+[ -n "$user" ] || { echo "no user to grant"; exit 0; }
+id "$user" >/dev/null 2>&1 || { echo "no such user: $user" >&2; exit 1; }
+for _ in $(seq 1 30); do
+    [ -S /run/tailscale/tailscaled.sock ] && break
+    sleep 1
+done
+tailscale set --operator="$user"
+echo "tailscale operator: $user"

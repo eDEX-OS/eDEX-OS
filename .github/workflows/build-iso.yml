@@ -1,233 +1,130 @@
-name: Build eDEX-OS ISO
+name: Build ISO
 
 on:
   push:
+    branches: [main, "claude/**"]
+    tags: ["v*"]
+  pull_request:
     branches: [main]
-    tags:
-      - 'v*'
+  schedule:
+    - cron: "17 4 * * 1"
   workflow_dispatch:
 
 jobs:
-  # ── Job 1: Build eDEX-DE binary on ubuntu-latest ─────────────────────────────
-  build-de:
-    name: Build eDEX-DE binary
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout with submodules
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-
-      - name: Pull latest submodule
-        run: git submodule update --remote --recursive
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            lld \
-            llvm \
-            libasound2-dev
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: desktop/package-lock.json
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: desktop -> desktop/target
-
-      - name: Install JS dependencies
-        run: cd desktop && npm ci
-
-      - name: Build Tauri app
-        run: cd desktop && npm run tauri build
-
-      - name: Find and stage DE binary
-        id: find-bin
-        run: |
-          # Tauri builds the binary at desktop/target/release/ (not src-tauri/target/)
-          BIN="desktop/target/release/edex-de"
-          if [[ -f "$BIN" ]]; then
-            echo "==> Found binary at: $BIN"
-          else
-            echo "==> Expected path not found, searching..."
-            find desktop/target/release -maxdepth 1 -type f -executable 2>/dev/null | sort
-            BIN=$(find desktop/target/release -maxdepth 1 -type f -executable \
-              ! -name '*.so' ! -name '*.a' ! -name '*.d' 2>/dev/null | head -1)
-            echo "==> Using fallback: $BIN"
-          fi
-          mkdir -p /tmp/edex-bin
-          cp "$BIN" /tmp/edex-bin/edex-de
-          echo "path=/tmp/edex-bin/edex-de" >> "$GITHUB_OUTPUT"
-
-      - name: Upload DE binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: edex-de-binary
-          path: /tmp/edex-bin/edex-de
-          if-no-files-found: error
-          retention-days: 1
-
-  # ── Job 2: Build ISO inside privileged Arch Linux Docker container ────────────
   build-iso:
-    name: Build ISO
-    needs: build-de
-    runs-on: ubuntu-latest
+    name: Build ISO (Arch container)
+    runs-on: ubuntu-24.04
     outputs:
-      version: ${{ steps.version.outputs.version }}
       iso_name: ${{ steps.version.outputs.iso_name }}
-
+      version: ${{ steps.version.outputs.version }}
     steps:
-      - name: Checkout with submodules
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: true
           fetch-depth: 0
 
-      - name: Pull latest submodule
-        run: git submodule update --remote --recursive
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+          sudo docker image prune -af >/dev/null 2>&1 || true
+          df -h /
 
-      - name: Download eDEX-DE binary
-        uses: actions/download-artifact@v4
-        with:
-          name: edex-de-binary
-          path: iso/airootfs/usr/bin/
-
-      - name: Set binary executable
-        run: chmod +x iso/airootfs/usr/bin/edex-de
-
-      - name: Determine ISO version
+      - name: Version
         id: version
         run: |
-          VERSION=$(date +%Y.%m.%d)
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          fi
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "iso_name=eDEX-OS-x86_64-${VERSION}.iso" >> "$GITHUB_OUTPUT"
+          V=$(date +%Y.%m.%d)
+          [[ "$GITHUB_REF" == refs/tags/* ]] && V="${GITHUB_REF_NAME#v}"
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "iso_name=edex-os-x86_64-$V.iso" >> "$GITHUB_OUTPUT"
 
-      - name: Ensure loop module loaded on host
-        run: sudo modprobe loop
-
-      - name: Build ISO in Arch Linux container
+      - name: Build packages and ISO
         run: |
-          docker run --rm --privileged \
-            --device /dev/fuse \
-            -v "$GITHUB_WORKSPACE:/workspace" \
-            -w /workspace \
-            archlinux:latest \
-            bash /workspace/scripts/ci-build-iso.sh
+          sudo modprobe loop
+          docker run --rm --privileged --device /dev/fuse -v "$PWD:/workspace" -w /workspace \
+            -e SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" archlinux:latest \
+            bash -c 'git config --global --add safe.directory "*" && bash scripts/ci-build-iso.sh'
+          sudo chown -R "$USER:$USER" out/
 
-      - name: Fix output directory permissions
-        run: sudo chown -R "$USER:$USER" out/
-
-      - name: Rename ISO to versioned name
-        run: |
-          ISO=$(ls out/*.iso 2>/dev/null | head -1)
-          NEW="out/${{ steps.version.outputs.iso_name }}"
-          [[ -n "$ISO" && "$ISO" != "$NEW" ]] && mv "$ISO" "$NEW" || true
-
-      - name: Generate checksums
+      - name: Rename and checksum
         run: |
           cd out
-          ISO="${{ steps.version.outputs.iso_name }}"
-          sha256sum "$ISO" > "${ISO}.sha256"
-          sha512sum "$ISO" > "${ISO}.sha512"
-          echo "==> Checksums:"
-          cat "${ISO}.sha256"
+          ISO=$(ls edex-os-*.iso | head -1)
+          NEW="${{ steps.version.outputs.iso_name }}"
+          [ "$ISO" = "$NEW" ] || mv "$ISO" "$NEW"
+          rm -f ./*.sha256 ./*.sha512
+          sha256sum "$NEW" > "$NEW.sha256"
+          sha512sum "$NEW" > "$NEW.sha512"
+          tar -czf "edex-os-repo-${{ steps.version.outputs.version }}.tar.gz" -C repo .
+          cat "$NEW.sha256"
 
-      - name: GPG sign (tag builds only)
+      - name: GPG sign (tags)
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         run: |
-          if [[ -z "$GPG_PRIVATE_KEY" ]]; then
-            echo "==> No GPG key configured, skipping signing"
-            exit 0
-          fi
+          [ -n "$GPG_PRIVATE_KEY" ] || { echo "no GPG key configured; skipping"; exit 0; }
           echo "$GPG_PRIVATE_KEY" | gpg --batch --import
           cd out
-          ISO="${{ steps.version.outputs.iso_name }}"
-          echo "$GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 \
-            --detach-sign --armor "$ISO"
+          echo "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor "${{ steps.version.outputs.iso_name }}"
 
-      - name: Upload ISO artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: edex-os-iso-${{ steps.version.outputs.version }}
+          name: edex-os-iso
           path: |
             out/*.iso
             out/*.sha256
             out/*.sha512
             out/*.asc
-          retention-days: 30
+            out/*.tar.gz
+          retention-days: 14
 
-      - name: Clean up work directory
-        if: always()
-        run: rm -rf /tmp/edex-os-work
-
-  # ── Job 3: Create GitHub Release on tag push ──────────────────────────────────
-  release:
-    name: Create GitHub Release
+  test-boot:
+    name: Boot test (${{ matrix.mode }})
     needs: build-iso
-    if: startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [uefi, bios]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download ISO artifact
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: edex-os-iso-${{ needs.build-iso.outputs.version }}
+          name: edex-os-iso
           path: out/
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
+      - name: QEMU
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y qemu-system-x86 ovmf
+          sudo chmod a+rw /dev/kvm || true
+      - name: Boot and check markers
+        run: scripts/test-iso.sh --mode ${{ matrix.mode }} --timeout 900
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: "eDEX-OS ${{ github.ref_name }}"
-          body: |
-            ## eDEX-OS ${{ github.ref_name }}
+          name: boot-log-${{ matrix.mode }}
+          path: out/test/*.log
 
-            Privacy-focused CachyOS/Arch-based Linux with the eDEX-DE sci-fi Hyprland desktop.
-
-            ### Highlights
-            - **linux-cachyos** kernel (BORE/EEVDF scheduler)
-            - **Tor** dual-mode: SOCKS5 proxy + full transparent proxy (off by default)
-            - **Tailscale** mesh VPN with peer/exit-node control
-            - **WireGuard & OpenVPN** via NetworkManager
-            - **dnscrypt-proxy** DNS-over-HTTPS with DNSSEC
-            - **Calamares** GUI installer
-            - **yay** and **paru** AUR helpers pre-installed
-            - Privacy Control Panel: `Ctrl+Shift+P` in eDEX-DE
-
-            ### Verify
-            ```bash
-            sha256sum -c eDEX-OS-x86_64-*.iso.sha256
-            ```
-          files: |
-            out/*.iso
-            out/*.sha256
-            out/*.sha512
-            out/*.asc
-          draft: false
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+  test-install:
+    name: Unattended install test
+    needs: build-iso
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: edex-os-iso
+          path: out/
+      - name: QEMU
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y qemu-system-x86 qemu-utils ovmf libarchive-tools p7zip-full
+          sudo chmod a+rw /dev/kvm || true
+      - name: Install to a virtual disk and boot it
+        run: scripts/test-install.sh --timeout 1500
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: install-logs
+          path: out/test/*.log

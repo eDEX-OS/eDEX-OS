@@ -2,36 +2,35 @@
 pkgname=edex-os-branding
 pkgver=1.0.0
 pkgrel=1
-pkgdesc="eDEX-OS Plymouth theme, GRUB theme, and wallpapers"
+pkgdesc="eDEX-OS Plymouth theme, GRUB theme, wallpapers and icons"
 arch=('any')
 url="https://github.com/eDEX-OS/eDEX-OS"
-license=('GPL3')
+license=('GPL-3.0-only')
 depends=('plymouth' 'grub')
-source=("git+https://github.com/eDEX-OS/eDEX-OS.git")
+install=edex-os-branding.install
+source=("$pkgname-$pkgver.tar")
 sha256sums=('SKIP')
 
 package() {
-    cd "${srcdir}/eDEX-OS"
-
-    install -dm755 "${pkgdir}/usr/share/plymouth/themes/edex-os"
-    cp -r branding/plymouth/edex-os/* "${pkgdir}/usr/share/plymouth/themes/edex-os/"
-
-    install -dm755 "${pkgdir}/usr/share/grub/themes/edex-os"
-    cp -r branding/grub/edex-os/* "${pkgdir}/usr/share/grub/themes/edex-os/"
-
-    install -dm755 "${pkgdir}/usr/share/edex-os/wallpapers"
-    cp branding/wallpapers/* "${pkgdir}/usr/share/edex-os/wallpapers/" 2>/dev/null || true
-}
-
-post_install() {
-    plymouth-set-default-theme edex-os -R || true
-
-    if [[ -f /etc/default/grub ]]; then
-        sed -i 's|^#\?GRUB_THEME=.*|GRUB_THEME=/usr/share/grub/themes/edex-os/theme.txt|' /etc/default/grub
-        grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || true
-    fi
-}
-
-post_upgrade() {
-    post_install
+    cd "$srcdir/$pkgname-$pkgver"
+    # Plymouth
+    install -dm755 "$pkgdir/usr/share/plymouth/themes/edex-os"
+    install -m644 plymouth/edex-os/edex-os.plymouth plymouth/edex-os/edex-os.script "$pkgdir/usr/share/plymouth/themes/edex-os/"
+    install -m644 generated/plymouth/*.png "$pkgdir/usr/share/plymouth/themes/edex-os/"
+    # GRUB
+    install -dm755 "$pkgdir/usr/share/grub/themes/edex-os/icons"
+    install -m644 grub/edex-os/theme.txt "$pkgdir/usr/share/grub/themes/edex-os/"
+    install -m644 generated/grub/*.pf2 generated/grub/background.png "$pkgdir/usr/share/grub/themes/edex-os/"
+    install -m644 generated/grub/icons/*.png "$pkgdir/usr/share/grub/themes/edex-os/icons/"
+    install -Dm644 grub/edex-os/edex-os.default "$pkgdir/etc/default/grub.d/90-edex-os.cfg"
+    # Wallpapers, icons, calamares images
+    install -dm755 "$pkgdir/usr/share/edex-os/wallpapers" "$pkgdir/usr/share/edex-os/calamares" "$pkgdir/usr/share/icons/hicolor/scalable/apps"
+    install -m644 generated/wallpapers/*.png "$pkgdir/usr/share/edex-os/wallpapers/"
+    install -m644 generated/calamares/*.png "$pkgdir/usr/share/edex-os/calamares/"
+    install -m644 src/logo.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/edex-os.svg"
+    for s in 64 128 256; do
+        install -Dm644 "generated/icons/edex-os-$s.png" "$pkgdir/usr/share/icons/hicolor/${s}x${s}/apps/edex-os.png"
+    done
+    install -Dm644 generated/syslinux/splash.png "$pkgdir/usr/share/edex-os/syslinux/splash.png"
+    install -Dm644 src/os-release "$pkgdir/usr/lib/os-release-edex"
 }

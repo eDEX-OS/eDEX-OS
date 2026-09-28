@@ -1,0 +1,28 @@
+# pacman.conf used by mkarchiso while building the eDEX-OS ISO. Generated into iso/pacman.conf by
+# scripts/ci-build-iso.sh with @REPO_DIR@ pointing at the local [edex-os] repository.
+[options]
+HoldPkg      = pacman glibc
+Architecture = auto
+Color
+CheckSpace
+VerbosePkgLists
+ParallelDownloads = 8
+SigLevel    = Required DatabaseOptional
+LocalFileSigLevel = Optional
+
+# Packages built from this repository (unsigned, local).
+[edex-os]
+SigLevel = Optional TrustAll
+Server = file://@REPO_DIR@
+
+[cachyos]
+Include = /etc/pacman.d/cachyos-mirrorlist
+
+[core]
+Include = /etc/pacman.d/mirrorlist
+
+[extra]
+Include = /etc/pacman.d/mirrorlist
+
+[multilib]
+Include = /etc/pacman.d/mirrorlist

@@ -1,115 +1,161 @@
 #!/usr/bin/env bash
-# edex-tor-mode — eDEX-OS Tor mode switcher
-# Called as root via: pkexec edex-tor-mode [off|socks5|transparent]
-# State file: /run/edex-tor-mode
-
+# edex-tor-mode — switch the eDEX-OS Tor mode. Run as root (eDEX-DE uses pkexec).
+#
+#   edex-tor-mode off                stop tor, remove the transparent firewall
+#   edex-tor-mode socks5             tor on 127.0.0.1:9050; nothing is redirected
+#   edex-tor-mode transparent [--strict]
+#                                    redirect all TCP + DNS through Tor, fail closed
+#                                    (--strict also blocks Tailscale)
+#   edex-tor-mode status             print the current mode and bootstrap state
+#   edex-tor-mode restore            re-apply the mode persisted for boot
 set -euo pipefail
 
-MODE="${1:-}"
-STATE_FILE="/run/edex-tor-mode"
-TORRC_MODE_DIR="/etc/tor/torrc.d"
-TORRC_TRANSPARENT="${TORRC_MODE_DIR}/transparent.conf"
+STATE_DIR=/var/lib/edex-os
+STATE_FILE=$STATE_DIR/tor-mode
+RUN_FILE=/run/edex-tor-mode
+TORRC_D=/etc/tor/torrc.d
+TRANSPARENT_CONF=$TORRC_D/50-transparent.conf
+NFT_TEMPLATE=/usr/share/edex-os/tor/transparent.nft
+COOKIE=/run/tor/control.authcookie
+BOOTSTRAP_TIMEOUT=${EDEX_TOR_BOOTSTRAP_TIMEOUT:-180}
 
-# Validate mode argument
-if [[ "$MODE" != "off" && "$MODE" != "socks5" && "$MODE" != "transparent" ]]; then
-    echo "Usage: edex-tor-mode [off|socks5|transparent]" >&2
-    exit 1
-fi
+log() { echo "[edex-tor-mode] $*"; logger -t edex-tor-mode -- "$*" 2>/dev/null || true; }
+die() { log "ERROR: $*"; exit 1; }
 
-flush_transparent_proxy() {
-    nft delete table ip tor-transparent 2>/dev/null || true
-    nft delete table ip6 tor-transparent 2>/dev/null || true
-    rm -f "${TORRC_TRANSPARENT}"
+[ "$(id -u)" -eq 0 ] || die "must run as root"
+mkdir -p "$STATE_DIR" "$TORRC_D"
+chgrp tor "$TORRC_D" 2>/dev/null || true
+chmod 750 "$TORRC_D"
+
+tor_uid() { id -u tor 2>/dev/null || die "tor user not found"; }
+
+control() {
+    # control <command> : one authenticated command on the control port; prints the reply.
+    [ -r "$COOKIE" ] || return 1
+    local hex
+    hex=$(od -An -tx1 -v "$COOKIE" | tr -d ' \n')
+    exec 3<>/dev/tcp/127.0.0.1/9051 || return 1
+    printf 'AUTHENTICATE %s\r\n%s\r\nQUIT\r\n' "$hex" "$1" >&3
+    timeout 5 cat <&3 || true
+    exec 3>&- 3<&-
 }
 
-apply_transparent_proxy() {
-    local TOR_UID
-    TOR_UID=$(id -u tor 2>/dev/null || getent passwd tor | cut -d: -f3 || echo "")
+bootstrap_pct() {
+    control "GETINFO status/bootstrap-phase" 2>/dev/null | sed -n 's/.*PROGRESS=\([0-9]*\).*/\1/p' | head -1
+}
 
-    if [[ -z "$TOR_UID" ]]; then
-        echo "[edex-tor-mode] ERROR: tor user not found" >&2
+wait_bootstrap() {
+    local waited=0 pct=0
+    while [ "$waited" -lt "$BOOTSTRAP_TIMEOUT" ]; do
+        pct=$(bootstrap_pct || true)
+        if [ "${pct:-0}" -ge 100 ] 2>/dev/null; then
+            log "tor bootstrapped"
+            return 0
+        fi
+        sleep 2
+        waited=$((waited + 2))
+    done
+    log "tor did not bootstrap within ${BOOTSTRAP_TIMEOUT}s (last ${pct:-?}%)"
+    return 1
+}
+
+load_table() {
+    # load_table [strict]
+    local uid rules
+    uid=$(tor_uid)
+    rules=$(sed "s/@TOR_UID@/$uid/" "$NFT_TEMPLATE")
+    if [ "${1:-}" != "strict" ]; then
+        rules=$(printf '%s\n' "$rules" | sed 's/^\(\s*\)# @TAILSCALE@ /\1/')
+    fi
+    printf '%s\n' "$rules" | nft -f - || die "cannot load the transparent firewall"
+}
+
+delete_table() {
+    nft delete table inet edex-tor 2>/dev/null || true
+}
+
+write_transparent_conf() {
+    cat > "$TRANSPARENT_CONF" <<'CONF'
+# Written by edex-tor-mode transparent
+TransPort 127.0.0.1:9040 IsolateClientAddr IsolateClientProtocol IsolateDestAddr IsolateDestPort
+DNSPort 127.0.0.1:5353
+AutomapHostsOnResolve 1
+VirtualAddrNetworkIPv4 10.192.0.0/10
+CONF
+    chown root:tor "$TRANSPARENT_CONF" 2>/dev/null || true
+    chmod 640 "$TRANSPARENT_CONF"
+}
+
+persist() {
+    echo "$1" > "$STATE_FILE"
+    echo "$1" > "$RUN_FILE"
+}
+
+tor_up() {
+    if systemctl is-active --quiet tor; then
+        systemctl reload tor
+    else
+        systemctl start tor
+    fi
+}
+
+mode_off() {
+    delete_table
+    rm -f "$TRANSPARENT_CONF"
+    systemctl stop tor 2>/dev/null || true
+    persist off
+    log "tor off"
+}
+
+mode_socks5() {
+    delete_table
+    rm -f "$TRANSPARENT_CONF"
+    tor_up
+    persist socks5
+    log "socks5 mode: tor on 127.0.0.1:9050"
+}
+
+mode_transparent() {
+    local strict=${1:-}
+    write_transparent_conf
+    # Fail closed *before* Tor is ready: nothing leaves un-torified while we wait.
+    load_table "$strict"
+    tor_up
+    if ! wait_bootstrap; then
+        log "rolling back to socks5"
+        mode_socks5
         exit 1
     fi
-
-    # Write torrc transparent proxy config
-    mkdir -p "${TORRC_MODE_DIR}"
-    cat > "${TORRC_TRANSPARENT}" <<TORRC
-TransPort 9040 IsolateClientAddr IsolateClientProtocol IsolateDestAddr IsolateDestPort
-DNSPort 5353
-AutomapHostsOnResolve 1
-TORRC
-    chmod 640 "${TORRC_TRANSPARENT}"
-    chown root:tor "${TORRC_TRANSPARENT}" 2>/dev/null || true
-
-    # Apply nftables transparent proxy rules
-    nft -f - <<NFT
-table ip tor-transparent {
-    chain prerouting {
-        type nat hook prerouting priority dstnat; policy accept;
-
-        # Exclude tor process traffic
-        meta skuid ${TOR_UID} return
-
-        # Exclude RFC1918 / loopback destinations
-        ip daddr 127.0.0.0/8 return
-        ip daddr 10.0.0.0/8 return
-        ip daddr 172.16.0.0/12 return
-        ip daddr 192.168.0.0/16 return
-
-        # Redirect DNS to tor DNSPort
-        udp dport 53 redirect to :5353
-        tcp dport 53 redirect to :5353
-
-        # Redirect all TCP to tor TransPort
-        ip protocol tcp redirect to :9040
-    }
-
-    chain output {
-        type nat hook output priority filter; policy accept;
-
-        # Exclude tor process
-        meta skuid ${TOR_UID} return
-
-        # Exclude loopback
-        ip daddr 127.0.0.0/8 return
-
-        # Redirect DNS
-        udp dport 53 redirect to :5353
-        tcp dport 53 redirect to :5353
-
-        # Redirect TCP
-        ip protocol tcp redirect to :9040
-    }
-}
-NFT
+    persist "transparent${strict:+-strict}"
+    log "transparent mode active${strict:+ (strict)}"
 }
 
-case "$MODE" in
-    off)
-        flush_transparent_proxy
-        systemctl stop tor 2>/dev/null || true
-        echo "off" > "${STATE_FILE}"
-        echo "[edex-tor-mode] Tor stopped."
-        ;;
+status() {
+    local mode pct table
+    mode=$(cat "$RUN_FILE" 2>/dev/null || cat "$STATE_FILE" 2>/dev/null || echo off)
+    table=$(nft list tables 2>/dev/null | grep -c 'inet edex-tor' || true)
+    pct=$(bootstrap_pct || true)
+    echo "mode: $mode"
+    echo "tor: $(systemctl is-active tor 2>/dev/null || echo inactive)"
+    echo "bootstrap: ${pct:-n/a}%"
+    echo "transparent-firewall: $([ "$table" -gt 0 ] && echo loaded || echo absent)"
+}
 
-    socks5)
-        flush_transparent_proxy
-        systemctl start tor
-        sleep 1
-        echo "socks5" > "${STATE_FILE}"
-        echo "[edex-tor-mode] Tor SOCKS5 mode active on 127.0.0.1:9050"
-        ;;
-
+case "${1:-}" in
+    off) mode_off ;;
+    socks5) mode_socks5 ;;
     transparent)
-        flush_transparent_proxy
-        systemctl start tor
-        sleep 2
-        apply_transparent_proxy
-        systemctl reload-or-restart tor
-        sleep 1
-        echo "transparent" > "${STATE_FILE}"
-        echo "[edex-tor-mode] Tor transparent proxy active."
-        ;;
+        if [ "${2:-}" = "--strict" ]; then mode_transparent strict; else mode_transparent; fi ;;
+    status) status ;;
+    restore)
+        saved=$(cat "$STATE_FILE" 2>/dev/null || echo off)
+        case "$saved" in
+            socks5) mode_socks5 ;;
+            transparent) mode_transparent ;;
+            transparent-strict) mode_transparent strict ;;
+            *) persist off; delete_table ;;
+        esac ;;
+    *)
+        echo "usage: edex-tor-mode off|socks5|transparent [--strict]|status|restore" >&2
+        exit 2 ;;
 esac
-
-exit 0

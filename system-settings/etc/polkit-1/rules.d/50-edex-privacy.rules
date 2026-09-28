@@ -1,0 +1,15 @@
+/* eDEX-DE runs privileged helpers through pkexec; members of wheel may run exactly these. */
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" && subject.isInGroup("wheel")) {
+        var program = action.lookup("program");
+        if (program == "/usr/bin/edex-tor-mode" ||
+            program == "/usr/bin/edex-tor-bridges" ||
+            program == "/usr/bin/edex-tailscale-operator" ||
+            program == "/usr/bin/edex-logind-conf" ||
+            program == "/usr/bin/edex-enable-cachy-repos" ||
+            program == "/usr/bin/chfn" ||
+            program == "/usr/bin/passwd") {
+            return polkit.Result.YES;
+        }
+    }
+});

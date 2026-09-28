@@ -1,0 +1,56 @@
+name: Packages
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "packages/**"
+      - "system-settings/**"
+      - "branding/**"
+      - "calamares/**"
+      - "live/**"
+      - "packaging/**"
+      - "scripts/build-packages.sh"
+      - "scripts/make-artwork.sh"
+      - "scripts/aur-packages.txt"
+      - "desktop"
+      - ".github/workflows/packages.yml"
+  pull_request:
+    paths:
+      - "packages/**"
+      - "system-settings/**"
+      - "branding/**"
+      - "calamares/**"
+      - "live/**"
+      - "packaging/**"
+      - "scripts/**"
+      - "desktop"
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build [edex-os] repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Build packages in an Arch container
+        run: |
+          docker run --rm --privileged -v "$PWD:/workspace" -w /workspace archlinux:latest bash -c '
+            set -e
+            pacman-key --init >/dev/null 2>&1; pacman-key --populate archlinux >/dev/null 2>&1
+            M=https://mirror.cachyos.org/repo/x86_64/cachyos; tmp=$(mktemp -d)
+            for p in cachyos-keyring-20240331-1-any cachyos-mirrorlist-27-1-any cachyos-v3-mirrorlist-27-1-any cachyos-v4-mirrorlist-27-1-any; do curl -sfL "$M/$p.pkg.tar.zst" -o "$tmp/$p.pkg.tar.zst"; done
+            pacman -U --noconfirm "$tmp"/*.pkg.tar.zst >/dev/null; pacman-key --populate cachyos >/dev/null 2>&1
+            printf "\n[cachyos]\nInclude = /etc/pacman.d/cachyos-mirrorlist\n" >> /etc/pacman.conf
+            pacman -Syu --noconfirm --needed git base-devel sudo ttf-dejavu bdf-unifont >/dev/null
+            git config --global --add safe.directory "*"
+            scripts/build-packages.sh /workspace/out/repo
+            namcap /workspace/out/repo/edex-*.pkg.tar.zst || true
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: edex-os-packages
+          path: out/repo/*.pkg.tar.zst

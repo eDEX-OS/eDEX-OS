@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Launch the eDEX-OS installer (Calamares with the eDEX-OS configuration).
+set -euo pipefail
+if [ ! -d /run/archiso ]; then
+    echo "edex-install only runs on the eDEX-OS live medium" >&2
+    exit 1
+fi
+export QT_QPA_PLATFORM=wayland
+export QT_QPA_PLATFORMTHEME=qt6ct
+export EDEX_INSTALL=1
+exec pkexec env DISPLAY="${DISPLAY:-}" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" \
+    QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-eDEX-DE}" \
+    /usr/bin/calamares -c /etc/edex-os/calamares "$@"

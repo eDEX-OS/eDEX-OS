@@ -1,0 +1,12 @@
+[Unit]
+Description=eDEX-OS CI boot report on the serial console
+After=graphical.target greetd.service
+ConditionKernelCommandLine=edex.ci
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/edex-ci-report
+StandardOutput=journal+console
+
+[Install]
+WantedBy=graphical.target

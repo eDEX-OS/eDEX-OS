@@ -1,0 +1,38 @@
+name: Bump eDEX-DE
+
+on:
+  schedule:
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Update the submodule to the latest tagged eDEX-DE release
+        id: bump
+        run: |
+          cd desktop
+          git fetch --tags origin
+          latest=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          [ -n "$latest" ] || { echo "no release tag"; exit 0; }
+          current=$(git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
+          if [ "$latest" != "$current" ]; then
+            git checkout -q "$latest"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "tag=$latest" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: peter-evans/create-pull-request@v6
+        if: steps.bump.outputs.changed == 'true'
+        with:
+          branch: bump/edex-de
+          title: "Bump eDEX-DE to ${{ steps.bump.outputs.tag }}"
+          commit-message: "chore: bump desktop submodule to ${{ steps.bump.outputs.tag }}"
+          body: "Automated submodule bump to eDEX-DE ${{ steps.bump.outputs.tag }}. The ISO build and boot tests must pass before merging."

@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# edex-tor-bridges — configure Tor pluggable-transport bridges. Run as root (eDEX-DE uses pkexec).
+#
+#   edex-tor-bridges obfs4 --stdin     read obfs4 bridge lines from stdin
+#   edex-tor-bridges snowflake         use the built-in Snowflake bridges
+#   edex-tor-bridges clear             remove all bridges
+set -euo pipefail
+TORRC_D=/etc/tor/torrc.d
+CONF=$TORRC_D/40-bridges.conf
+SNOWFLAKE=/usr/share/edex-os/tor/snowflake-bridges.conf
+
+[ "$(id -u)" -eq 0 ] || { echo "must run as root" >&2; exit 1; }
+mkdir -p "$TORRC_D"
+
+reload() {
+    if systemctl is-active --quiet tor; then
+        tor -f /etc/edex-os/torrc --verify-config >/dev/null || { rm -f "$CONF"; echo "bridge config rejected by tor" >&2; exit 1; }
+        systemctl reload tor
+    fi
+}
+
+case "${1:-}" in
+    obfs4)
+        [ "${2:-}" = "--stdin" ] || { echo "usage: edex-tor-bridges obfs4 --stdin" >&2; exit 2; }
+        [ -x /usr/bin/lyrebird ] || { echo "lyrebird (obfs4 client) is not installed" >&2; exit 1; }
+        lines=()
+        while IFS= read -r line; do
+            line=${line#Bridge }
+            line=${line#bridge }
+            [ -z "$line" ] && continue
+            if ! [[ "$line" =~ ^obfs4\ [][0-9a-fA-F:.]+:[0-9]{1,5}\ [0-9A-Fa-f]{40}\ cert=[A-Za-z0-9+/=]+\ iat-mode=[0-2]$ ]]; then
+                echo "invalid obfs4 bridge line: $line" >&2
+                exit 1
+            fi
+            lines+=("$line")
+        done
+        [ "${#lines[@]}" -gt 0 ] || { echo "no bridge lines given" >&2; exit 1; }
+        {
+            echo "# Written by edex-tor-bridges obfs4"
+            echo "UseBridges 1"
+            echo "ClientTransportPlugin obfs4 exec /usr/bin/lyrebird"
+            for l in "${lines[@]}"; do echo "Bridge $l"; done
+        } > "$CONF"
+        ;;
+    snowflake)
+        [ -x /usr/bin/snowflake-client ] || { echo "snowflake-pt-client is not installed" >&2; exit 1; }
+        cp "$SNOWFLAKE" "$CONF"
+        ;;
+    clear)
+        rm -f "$CONF"
+        ;;
+    *)
+        echo "usage: edex-tor-bridges obfs4 --stdin | snowflake | clear" >&2
+        exit 2 ;;
+esac
+[ -f "$CONF" ] && { chown root:tor "$CONF" 2>/dev/null || true; chmod 640 "$CONF"; }
+reload
+echo "bridges: ${1}"

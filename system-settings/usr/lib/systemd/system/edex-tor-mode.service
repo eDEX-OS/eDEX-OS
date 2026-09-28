@@ -1,0 +1,15 @@
+[Unit]
+Description=Restore the persisted eDEX-OS Tor mode
+After=network-pre.target nftables.service
+Wants=nftables.service
+Before=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/edex-tor-mode restore
+ExecStop=/usr/bin/edex-tor-mode off
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

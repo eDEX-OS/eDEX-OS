@@ -1,0 +1,7 @@
+
+  eDEX-OS live medium  //  privacy-focused CachyOS with the eDEX-DE shell
+
+  The desktop starts on tty1 (user: liveuser, no password; root password: edex).
+  Install from the desktop with the INSTALL button, SUPER+Space → "Install eDEX-OS",
+  or run `edex-install` from a terminal.
+

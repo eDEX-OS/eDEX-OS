@@ -1,0 +1,18 @@
+# Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
+pkgname=edex-os-live
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Live-ISO-only pieces of eDEX-OS (autologin, live user setup, CI hooks); removed by the installer"
+arch=('any')
+url="https://github.com/eDEX-OS/eDEX-OS"
+license=('GPL-3.0-only')
+depends=('edex-de' 'edex-os-settings' 'edex-os-greetd-config' 'sudo' 'systemd')
+source=("$pkgname-$pkgver.tar")
+sha256sums=('SKIP')
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    cp -a etc usr "$pkgdir/"
+    chmod 755 "$pkgdir"/usr/bin/*
+    chmod 440 "$pkgdir"/etc/sudoers.d/*
+}

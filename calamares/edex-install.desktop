@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Install eDEX-OS
+Comment=Install eDEX-OS to this computer
+Exec=edex-install
+Icon=edex-os
+Terminal=false
+Categories=System;
+Keywords=install;calamares;setup;
+OnlyShowIn=eDEX-DE;Hyprland;

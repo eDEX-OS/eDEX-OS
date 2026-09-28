@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <pattern id="hex" width="84" height="97" patternUnits="userSpaceOnUse" patternTransform="translate(0,0)">
+      <polygon points="42,2 80,25 80,72 42,95 4,72 4,25" fill="none" stroke="#00d4ff" stroke-opacity="0.16" stroke-width="1"/>
+      <polygon points="42,50 80,73 80,120 42,143 4,120 4,73" fill="none" stroke="#00d4ff" stroke-opacity="0.16" stroke-width="1" transform="translate(42,-48)"/>
+    </pattern>
+    <radialGradient id="vig" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0d1a2e"/>
+      <stop offset="100%" stop-color="#05080f"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#vig)"/>
+  <rect width="1920" height="1080" fill="url(#hex)"/>
+  <rect x="0" y="0" width="1920" height="2" fill="#00d4ff" fill-opacity="0.5"/>
+  <rect x="0" y="1078" width="1920" height="2" fill="#00d4ff" fill-opacity="0.5"/>
+</svg>

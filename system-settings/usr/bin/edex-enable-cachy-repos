@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# edex-enable-cachy-repos — enable the CachyOS x86-64-v3/v4 optimised repositories that this CPU
+# supports, above [cachyos] in /etc/pacman.conf. Idempotent; used by the installer post-install step.
+set -euo pipefail
+[ "$(id -u)" -eq 0 ] || { echo "must run as root" >&2; exit 1; }
+conf=${PACMAN_CONF:-/etc/pacman.conf}
+level=""
+if /lib/ld-linux-x86-64.so.2 --help 2>/dev/null | grep -q 'x86-64-v4 (supported, searched)'; then
+    level=v4
+elif /lib/ld-linux-x86-64.so.2 --help 2>/dev/null | grep -q 'x86-64-v3 (supported, searched)'; then
+    level=v3
+fi
+if [ -z "$level" ]; then
+    echo "CPU supports neither x86-64-v3 nor v4; keeping the generic [cachyos] repository"
+    exit 0
+fi
+if grep -q "^\[cachyos-$level\]" "$conf"; then
+    echo "cachyos-$level repositories already enabled"
+    exit 0
+fi
+[ -f "/etc/pacman.d/cachyos-$level-mirrorlist" ] || { echo "missing /etc/pacman.d/cachyos-$level-mirrorlist" >&2; exit 1; }
+block=$(printf '[cachyos-%s]\nInclude = /etc/pacman.d/cachyos-%s-mirrorlist\n\n[cachyos-core-%s]\nInclude = /etc/pacman.d/cachyos-%s-mirrorlist\n\n[cachyos-extra-%s]\nInclude = /etc/pacman.d/cachyos-%s-mirrorlist\n' "$level" "$level" "$level" "$level" "$level" "$level")
+if grep -q '^\[cachyos\]' "$conf"; then
+    awk -v block="$block" '/^\[cachyos\]/ && !done { print block; print ""; done=1 } { print }' "$conf" > "$conf.edex.tmp"
+else
+    awk -v block="$block" '/^\[core\]/ && !done { print block; print ""; done=1 } { print }' "$conf" > "$conf.edex.tmp"
+fi
+mv "$conf.edex.tmp" "$conf"
+echo "enabled cachyos-$level repositories"

@@ -1,0 +1,6 @@
+/* Live ISO: the live user may do anything without a password (no password is set). */
+polkit.addRule(function(action, subject) {
+    if (subject.user == "liveuser") {
+        return polkit.Result.YES;
+    }
+});

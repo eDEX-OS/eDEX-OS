@@ -1,0 +1,20 @@
+# Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
+pkgname=edex-os-greetd-config
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="greetd configuration for the eDEX greeter"
+arch=('any')
+url="https://github.com/eDEX-OS/eDEX-OS"
+license=('GPL-3.0-only')
+depends=('greetd' 'cage' 'edex-de' 'fprintd')
+install=edex-os-greetd-config.install
+backup=('etc/edex-os/greetd.toml')
+source=("$pkgname-$pkgver.tar")
+sha256sums=('SKIP')
+
+package() {
+    cd "$srcdir/$pkgname-$pkgver"
+    install -Dm644 greetd.toml "$pkgdir/etc/edex-os/greetd.toml"
+    install -Dm644 greetd.service.d.conf "$pkgdir/etc/systemd/system/greetd.service.d/edex.conf"
+    install -Dm644 greetd.pam "$pkgdir/usr/share/edex-os/pam/greetd"
+}

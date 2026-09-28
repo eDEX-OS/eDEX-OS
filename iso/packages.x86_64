@@ -1,3 +1,18 @@
+# eDEX-OS live/install medium package list. Every name is verified against the Arch, CachyOS
+# and local [edex-os] repositories by scripts/ci-build-iso.sh before mkarchiso runs.
+
+# === eDEX-OS (local [edex-os] repository) ===
+edex-de
+edex-os-settings
+edex-os-branding
+edex-os-calamares-config
+edex-os-greetd-config
+edex-os-live
+yay-bin
+paru-bin
+lyrebird
+snowflake-pt-client
+
 # === BASE SYSTEM ===
 base
 base-devel
@@ -7,27 +22,46 @@ linux-firmware
 linux-firmware-whence
 mkinitcpio
 mkinitcpio-archiso
-mkinitcpio-nfs-utils
 intel-ucode
 amd-ucode
+sof-firmware
+archlinux-keyring
+pacman-contrib
+arch-install-scripts
+squashfs-tools
+git
+jq
+sudo
+nano
+vim
+less
+man-db
+man-pages
+terminus-font
+ttf-dejavu
 
-# === CACHYOS TOOLS ===
+# === CACHYOS ===
 cachyos-keyring
 cachyos-mirrorlist
+cachyos-v3-mirrorlist
+cachyos-v4-mirrorlist
 cachyos-settings
 cachyos-hooks
 chwd
 cachyos-rate-mirrors
+cachyos-calamares
 
-# === BOOTLOADER ===
+# === BOOT ===
 grub
 efibootmgr
 os-prober
 syslinux
 memtest86+
 memtest86+-efi
+edk2-shell
+plymouth
 
-# === FILESYSTEM TOOLS ===
+# === FILESYSTEMS / STORAGE ===
 btrfs-progs
 dosfstools
 e2fsprogs
@@ -41,34 +75,47 @@ parted
 lvm2
 mdadm
 cryptsetup
+udisks2
+gvfs
+gvfs-mtp
+smartmontools
+nvme-cli
+usbutils
 
-# === NETWORK BASE ===
+# === NETWORK ===
 networkmanager
-network-manager-applet
-nm-connection-editor
-iwd
-dhcpcd
+networkmanager-openvpn
+wpa_supplicant
 openssh
 curl
 wget
 rsync
 
-# === WAYLAND / HYPRLAND STACK ===
+# === WAYLAND / HYPRLAND ===
 hyprland
-hyprpaper
 hyprlock
 hypridle
+hyprsunset
+hyprpolkitagent
+hyprland-guiutils
 xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
-waybar
-wofi
-dunst
-swww
+xorg-xwayland
+greetd
+cage
 grim
 slurp
 wl-clipboard
 wl-clip-persist
 cliphist
+awww
+mesa
+vulkan-icd-loader
+vulkan-swrast
+libnotify
+brightnessctl
+power-profiles-daemon
+accountsservice
 
 # === AUDIO ===
 pipewire
@@ -78,16 +125,16 @@ pipewire-pulse
 wireplumber
 pavucontrol
 playerctl
+alsa-utils
 
-# === XDG / PORTAL ===
+# === XDG / TOOLKITS / FONTS ===
 xdg-utils
 xdg-user-dirs
 desktop-file-utils
 shared-mime-info
-
-# === DISPLAY / THEMES ===
 qt5-wayland
 qt6-wayland
+qt6ct
 gtk3
 gtk4
 noto-fonts
@@ -95,55 +142,41 @@ noto-fonts-emoji
 ttf-jetbrains-mono-nerd
 ttf-nerd-fonts-symbols
 
-# === TERMINAL / SHELL ===
+# === APPLICATIONS ===
 kitty
 fish
 zsh
 starship
 tmux
-
-# === SYSTEM UTILITIES ===
-polkit
-polkit-qt6
-polkit-gnome
-upower
-udisks2
-gvfs
-gvfs-mtp
 nemo
 nemo-fileroller
 file-roller
-p7zip
+7zip
 unrar
 htop
 btop
 fastfetch
-man-db
-man-pages
 
 # === SECURITY / AUTH ===
+polkit
 fprintd
 libfprint
 gnome-keyring
 libsecret
+upower
 
 # === BLUETOOTH ===
 bluez
 bluez-utils
 blueman
 
-# === PRIVACY TOOLS ===
+# === PRIVACY ===
 tailscale
 tor
 torsocks
 nyx
 wireguard-tools
 openvpn
-networkmanager-openvpn
 dnscrypt-proxy
 nftables
-iptables-nft
 macchanger
-
-# === INSTALLER ===
-cachyos-calamares

@@ -1,0 +1,8 @@
+#%PAM-1.0
+# Reference PAM stack for greetd with fingerprint support (installed by the package .install hook).
+auth       sufficient   pam_fprintd.so max-tries=3 timeout=30
+auth       required     pam_securetty.so
+auth       requisite    pam_nologin.so
+auth       include      system-local-login
+account    include      system-local-login
+session    include      system-local-login

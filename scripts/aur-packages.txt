@@ -1,0 +1,5 @@
+# AUR packages built into the [edex-os] repository: name  pinned-commit
+yay-bin              13e0a4754d106a9252b7479bf1b370fbe454fc48
+paru-bin             92a55429afbec4fceeb2cef843245105307444d2
+lyrebird             a34a76f941d0a9173ca0c0be27bc74d65fc3909a
+snowflake-pt-client  66c6b1d1043251e3609664ab430fd52c8a30c62c
