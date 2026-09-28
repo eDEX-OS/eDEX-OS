@@ -29,9 +29,9 @@ if [ -w /dev/kvm ]; then ACCEL="-enable-kvm -cpu host"; else ACCEL="-accel tcg,t
 
 # Extract kernel + initramfs so we can pass edex.ci=install without touching the boot menu.
 TMP=$(mktemp -d); trap 'rm -rf -- "${TMP:?}"' EXIT
-bsdtar -xf "$ISO" -C "$TMP" arch/boot/x86_64/vmlinuz-linux-cachyos arch/boot/x86_64/initramfs-linux-cachyos.img arch/boot/intel-ucode.img arch/boot/amd-ucode.img 2>/dev/null \
+bsdtar -xf "$ISO" -C "$TMP" arch/boot/x86_64/vmlinuz-linux-cachyos arch/boot/x86_64/initramfs-linux-cachyos.img 2>/dev/null \
     || (cd "$TMP" && 7z x -y "$ISO" 'arch/boot/*' >/dev/null)
-cat "$TMP/arch/boot/intel-ucode.img" "$TMP/arch/boot/amd-ucode.img" "$TMP/arch/boot/x86_64/initramfs-linux-cachyos.img" > "$TMP/initrd.img"
+cp "$TMP/arch/boot/x86_64/initramfs-linux-cachyos.img" "$TMP/initrd.img"
 LABEL=$(blkid -o value -s LABEL "$ISO" 2>/dev/null || isoinfo -d -i "$ISO" | sed -n 's/^Volume id: //p')
 
 echo "==> installing (log: $OUT/install.log)"
