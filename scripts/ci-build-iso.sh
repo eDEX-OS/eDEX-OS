@@ -47,7 +47,10 @@ msg "generating iso/pacman.conf"
 sed "s|@REPO_DIR@|$REPO_DIR|" "$ROOT/iso/pacman.conf.in" > "$ROOT/iso/pacman.conf"
 
 msg "checking that every package in packages.x86_64 resolves"
-grep -vE '^\s*(#|$)' "$ROOT/iso/packages.x86_64" | xargs pacman --config "$ROOT/iso/pacman.conf" -Sp --print-format '%n' >/dev/null
+dbtmp=$(mktemp -d)
+pacman --config "$ROOT/iso/pacman.conf" --dbpath "$dbtmp" -Sy >/dev/null
+grep -vE '^\s*(#|$)' "$ROOT/iso/packages.x86_64" | xargs pacman --config "$ROOT/iso/pacman.conf" --dbpath "$dbtmp" -Sp --print-format '%n' >/dev/null
+rm -rf -- "${dbtmp:?}"
 
 msg "staging generated artwork into the profile"
 install -Dm644 "$ROOT/branding/generated/syslinux/splash.png" "$ROOT/iso/syslinux/splash.png"
