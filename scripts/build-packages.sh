@@ -23,10 +23,15 @@ if ! id "$BUILDER" >/dev/null 2>&1; then
 fi
 echo "$BUILDER ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/90-builder
 chmod 440 /etc/sudoers.d/90-builder
-pacman -S --needed --noconfirm base-devel git sudo namcap librsvg imagemagick grub >/dev/null
+pacman -S --needed --noconfirm base-devel git sudo namcap librsvg imagemagick grub ttf-dejavu fontconfig >/dev/null
 
-VERSION=$(git -C "$ROOT" describe --tags --always 2>/dev/null | sed -e 's/^v//' -e 's/-/./g')
-[ -n "$VERSION" ] || VERSION=$(date +%Y.%m.%d)
+# pkgver in the AUR style: <last tag>.r<commits since>.g<hash>, or 0.r<count>.g<hash> without a tag.
+if tag=$(git -C "$ROOT" describe --tags --abbrev=0 2>/dev/null); then
+    VERSION="${tag#v}.r$(git -C "$ROOT" rev-list --count "$tag..HEAD").g$(git -C "$ROOT" rev-parse --short HEAD)"
+else
+    VERSION="0.r$(git -C "$ROOT" rev-list --count HEAD 2>/dev/null || echo 0).g$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || date +%Y%m%d)"
+fi
+VERSION=${VERSION//-/.}
 msg "eDEX-OS version $VERSION"
 
 # Artwork used by edex-os-branding.

@@ -34,7 +34,7 @@ fi
 
 msg "installing build tools"
 pacman -Syu --noconfirm --needed base-devel git archiso squashfs-tools dosfstools mtools libisoburn grub syslinux \
-    librsvg imagemagick ttf-dejavu bdf-unifont sudo namcap >/dev/null
+    librsvg imagemagick ttf-dejavu sudo namcap >/dev/null
 
 msg "building packages into [edex-os]"
 "$ROOT/scripts/build-packages.sh" "$REPO_DIR"

@@ -45,7 +45,7 @@ jobs:
             for p in cachyos-keyring-20240331-1-any cachyos-mirrorlist-27-1-any cachyos-v3-mirrorlist-27-1-any cachyos-v4-mirrorlist-27-1-any; do curl -sfL "$M/$p.pkg.tar.zst" -o "$tmp/$p.pkg.tar.zst"; done
             pacman -U --noconfirm "$tmp"/*.pkg.tar.zst >/dev/null; pacman-key --populate cachyos >/dev/null 2>&1
             printf "\n[cachyos]\nInclude = /etc/pacman.d/cachyos-mirrorlist\n" >> /etc/pacman.conf
-            pacman -Syu --noconfirm --needed git base-devel sudo ttf-dejavu bdf-unifont >/dev/null
+            pacman -Syu --noconfirm --needed git base-devel sudo ttf-dejavu >/dev/null
             git config --global --add safe.directory "*"
             scripts/build-packages.sh /workspace/out/repo
             namcap /workspace/out/repo/edex-*.pkg.tar.zst || true

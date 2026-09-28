@@ -8,9 +8,12 @@ OUT="${1:-$ROOT/branding/generated}"
 for tool in rsvg-convert magick grub-mkfont; do
     command -v "$tool" >/dev/null || { echo "missing $tool" >&2; exit 1; }
 done
-FONT=$(fc-match -f '%{file}' 'DejaVu Sans Mono' 2>/dev/null || true)
-[ -f "$FONT" ] || FONT=$(ls /usr/share/fonts/TTF/DejaVuSansMono.ttf /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf 2>/dev/null | head -1)
-[ -f "$FONT" ] || { echo "DejaVu Sans Mono font not found" >&2; exit 1; }
+FONT=""
+for f in /usr/share/fonts/TTF/DejaVuSansMono.ttf /usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf; do
+    [ -f "$f" ] && { FONT=$f; break; }
+done
+[ -n "$FONT" ] || FONT=$(fc-match -f '%{file}' 'DejaVu Sans Mono' 2>/dev/null || true)
+[ -f "$FONT" ] || { echo "DejaVu Sans Mono font not found (install ttf-dejavu)" >&2; exit 1; }
 UNIFONT=$(ls /usr/share/fonts/misc/unifont.pcf.gz /usr/share/fonts/unifont/unifont.pcf.gz 2>/dev/null | head -1 || true)
 
 mkdir -p "$OUT"/{plymouth,grub/icons,calamares,wallpapers,icons,syslinux,greeter}
