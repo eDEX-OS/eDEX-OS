@@ -30,13 +30,15 @@ find_ovmf() {
     done
     return 1
 }
+# shellcheck disable=SC2054
 if [ -w /dev/kvm ]; then ACCEL=(-enable-kvm -cpu host); else ACCEL=(-accel tcg,thread=multi -cpu max); fi
+# shellcheck disable=SC2054
 COMMON=(-m 4096 -smp 2 -vga virtio -display none -device virtio-rng-pci -netdev user,id=n0 -device virtio-net-pci,netdev=n0 -monitor none -no-reboot)
 
 wait_for() {
     # wait_for <log> <pid> <seconds> <regex-success> <regex-failure>
-    local log=$1 pid=$2 secs=$3 ok=$4 bad=$5 i
-    for i in $(seq 1 "$secs"); do
+    local log=$1 pid=$2 secs=$3 ok=$4 bad=$5
+    for _ in $(seq 1 "$secs"); do
         if grep -aqE "$ok" "$log" 2>/dev/null; then return 0; fi
         if [ -n "$bad" ] && grep -aqE "$bad" "$log" 2>/dev/null; then return 1; fi
         kill -0 "$pid" 2>/dev/null || return 1
