@@ -36,8 +36,12 @@ msg "installing build tools"
 pacman -Syu --noconfirm --needed base-devel git archiso squashfs-tools dosfstools mtools libisoburn grub syslinux \
     librsvg imagemagick ttf-dejavu sudo namcap >/dev/null
 
-msg "building packages into [edex-os]"
-"$ROOT/scripts/build-packages.sh" "$REPO_DIR"
+if [ "${EDEX_SKIP_PACKAGES:-0}" = 1 ] && [ -f "$REPO_DIR/edex-os.db" ]; then
+    msg "reusing the packages already in $REPO_DIR (EDEX_SKIP_PACKAGES=1)"
+else
+    msg "building packages into [edex-os]"
+    "$ROOT/scripts/build-packages.sh" "$REPO_DIR"
+fi
 
 msg "generating iso/pacman.conf"
 sed "s|@REPO_DIR@|$REPO_DIR|" "$ROOT/iso/pacman.conf.in" > "$ROOT/iso/pacman.conf"
