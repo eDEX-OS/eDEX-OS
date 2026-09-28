@@ -1,7 +1,7 @@
 [Unit]
 Description=eDEX-OS live environment setup
-DefaultDependencies=no
-After=local-fs.target systemd-tmpfiles-setup.service
+# Needs the live user from sysusers.d and the tmpfiles-created state directories.
+After=sysinit.target systemd-sysusers.service systemd-tmpfiles-setup.service
 Before=greetd.service display-manager.service
 ConditionPathExists=/run/archiso
 
