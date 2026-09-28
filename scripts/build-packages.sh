@@ -64,13 +64,20 @@ if [ ! -f "$ROOT/desktop/Cargo.toml" ]; then
     echo "desktop/ submodule is not checked out (git submodule update --init)" >&2
     exit 1
 fi
-msg "building edex-de from desktop/ ($(git -C "$ROOT/desktop" rev-parse --short HEAD))"
-DE_WORK="${WORK:?}/edex-de"
-rm -rf -- "${DE_WORK:?}"
-cp -a "$ROOT/desktop" "$DE_WORK"
-chown -R "$BUILDER" "$DE_WORK"
-(cd "$DE_WORK" && as_builder scripts/build-pkg.sh >/dev/null)
-cp "$DE_WORK"/packaging/aur/*.pkg.tar.zst "$OUT/"
+DE_REV=$(git -C "$ROOT/desktop" rev-parse --short HEAD)
+if ls "$OUT"/edex-de-*.pkg.tar.zst >/dev/null 2>&1 && [ "${EDEX_REBUILD_DE:-0}" != 1 ]; then
+    msg "reusing the edex-de package already in $OUT (set EDEX_REBUILD_DE=1 to rebuild)"
+else
+    msg "building edex-de from desktop/ ($DE_REV)"
+    DE_WORK="${WORK:?}/edex-de"
+    rm -rf -- "${DE_WORK:?}"
+    cp -a "$ROOT/desktop" "$DE_WORK"
+    chown -R "$BUILDER" "$DE_WORK"
+    rm -f "$OUT"/edex-de-*.pkg.tar.zst
+    # The submodule's script writes the package next to its PKGBUILD unless PKGDEST is set.
+    (cd "$DE_WORK" && sudo -u "$BUILDER" -H env HOME="/home/$BUILDER" PKGDEST="$OUT" scripts/build-pkg.sh >/dev/null) || true
+    ls "$OUT"/edex-de-*.pkg.tar.zst >/dev/null 2>&1 || { echo "edex-de package was not produced" >&2; exit 1; }
+fi
 
 # 2. Local packages.
 build_local edex-os-settings system-settings
