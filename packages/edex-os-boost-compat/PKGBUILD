@@ -1,15 +1,15 @@
 # Maintainer: eDEX-OS Project <https://github.com/eDEX-OS>
 # Live-medium-only compatibility shim: cachyos-calamares is linked against boost 1.91 while Arch
-# ships a newer boost. This repackages the Boost.Python 1.91 library from the Arch archive into a
+# ships a newer boost. This repackages the Boost 1.91 runtime libraries from the Arch archive into a
 # private directory that only `edex-install` puts on LD_LIBRARY_PATH. Removed by the installer.
 pkgname=edex-os-boost-compat
 pkgver=1.91.0
 pkgrel=1
-pkgdesc="Boost.Python 1.91 runtime for the CachyOS Calamares build on the eDEX-OS live medium"
+pkgdesc="Boost 1.91 runtime for the CachyOS Calamares build on the eDEX-OS live medium"
 arch=('x86_64')
 url="https://www.boost.org/"
 license=('BSL-1.0')
-depends=('python' 'glibc' 'gcc-libs')
+depends=('python' 'glibc' 'gcc-libs' 'icu' 'zstd' 'xz' 'bzip2' 'zlib')
 source=("https://archive.archlinux.org/packages/b/boost-libs/boost-libs-1.91.0-2-x86_64.pkg.tar.zst")
 noextract=("boost-libs-1.91.0-2-x86_64.pkg.tar.zst")
 sha256sums=('62cfd278b0260bd2ce5c93f6ab4669d2eefe840eab19e2c3854762f295924655')
@@ -17,6 +17,6 @@ options=('!strip' '!debug')
 
 package() {
     install -dm755 "$pkgdir/usr/lib/edex-os/boost-compat"
-    bsdtar -xf "$srcdir/boost-libs-1.91.0-2-x86_64.pkg.tar.zst" -C "$srcdir" 'usr/lib/libboost_python314.so.1.91.0'
-    install -m755 "$srcdir/usr/lib/libboost_python314.so.1.91.0" "$pkgdir/usr/lib/edex-os/boost-compat/"
+    bsdtar -xf "$srcdir/boost-libs-1.91.0-2-x86_64.pkg.tar.zst" -C "$srcdir" usr/lib
+    install -m755 "$srcdir"/usr/lib/libboost_*.so.1.91.0 "$pkgdir/usr/lib/edex-os/boost-compat/"
 }

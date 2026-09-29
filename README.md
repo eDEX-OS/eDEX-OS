@@ -92,7 +92,7 @@ docs/                    building, testing, architecture, installer, privacy
 * NVIDIA: install `nvidia-open-dkms` after installation and add `nvidia_drm.modeset=1`; the live medium
   uses the open-source stack (`nomodeset` entry available).
 * The installer is the CachyOS Calamares build. It is currently linked against boost 1.91 while Arch ships a
-  newer boost, so the live medium carries `edex-os-boost-compat` (Boost.Python 1.91 from the Arch archive,
+  newer boost, so the live medium carries `edex-os-boost-compat` (the Boost 1.91 runtime from the Arch archive,
   checksum-pinned, in a private library directory used only by `edex-install`; removed on install). Drop it
   once CachyOS rebuilds Calamares; the boot test's `installer-ok` marker checks that the installer links.
 * Tor transparent mode + Tailscale: Tailscale traffic bypasses Tor by design (WireGuard cannot go through
