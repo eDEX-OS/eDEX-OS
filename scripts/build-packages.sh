@@ -114,7 +114,15 @@ while read -r name commit; do
     fi
     (cd "$dir" && as_builder git fetch -q origin && as_builder git checkout -q "$commit")
     msg "building AUR $name@$commit"
-    (cd "$dir" && as_builder makepkg -s --noconfirm -f --noprogressbar >/dev/null)
+    # Upstream sources are fetched over the network; retry transient download failures.
+    ok=0
+    for attempt in 1 2 3; do
+        if (cd "$dir" && as_builder makepkg -s --noconfirm -f --noprogressbar >/dev/null); then ok=1; break; fi
+        msg "attempt $attempt for $name failed; retrying"
+        rm -rf -- "${dir:?}/src"
+        sleep $((attempt * 10))
+    done
+    [ "$ok" = 1 ] || { echo "AUR package $name failed after 3 attempts" >&2; exit 1; }
 done < "$ROOT/scripts/aur-packages.txt"
 
 # 4. Repository database.
