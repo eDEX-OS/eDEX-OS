@@ -5,3 +5,4 @@
 /iso/grub/themes/
 /branding/generated/
 *.pkg.tar.zst
+/out-build.log
