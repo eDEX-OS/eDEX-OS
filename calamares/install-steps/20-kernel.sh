@@ -21,6 +21,10 @@ rm -f "$ROOT/etc/motd" "$ROOT/etc/issue"
 rm -f "$ROOT/etc/systemd/system/greetd.service.d/live.conf"
 rmdir "$ROOT/etc/systemd/system/greetd.service.d" 2>/dev/null || true
 rm -f "$ROOT/etc/ssh/sshd_config.d/10-edex-live.conf"
+# The live medium masks networkd/resolved outright; installed systems only disable them (services-systemd).
+for u in systemd-networkd.service systemd-networkd.socket systemd-networkd-wait-online.service systemd-networkd-varlink.socket systemd-networkd-resolve-hook.socket systemd-resolved.service systemd-resolved-varlink.socket systemd-resolved-monitor.socket; do
+    [ -L "$ROOT/etc/systemd/system/$u" ] && [ "$(readlink "$ROOT/etc/systemd/system/$u")" = /dev/null ] && rm -f "$ROOT/etc/systemd/system/$u"
+done
 # Persistent journal on installed systems.
 rm -f "$ROOT/etc/systemd/journald.conf.d/50-edex-live.conf"
 rm -f "$ROOT/etc/systemd/logind.conf.d/50-edex-live.conf"
