@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0 — 2026-09-29
+
+First stable release: everything in 1.0.0-rc.1, plus
+
+* Installer: post-install now runs before the live-only packages are removed (the script ships in one
+  of them), in Calamares and in the CI install test.
+* dnscrypt-proxy starts offline: a signed resolver list pinned to a dnscrypt-resolvers commit seeds its
+  cache, so DNS works when the list cannot be downloaded (refresh with
+  `scripts/update-dnscrypt-resolvers.sh`).
+* `edex-os-boost-compat` supplies the Boost 1.91 libraries `cachyos-calamares` is linked against (live
+  medium only).
+* The ISO fits GitHub's 2 GiB release-asset limit (xz-compressed root image).
+* CI fixes: the ISO build installs git before using it; the nft lint runs with `CAP_NET_ADMIN`.
+
+Tested: live boot (UEFI and BIOS) and unattended install to disk booting both ways in QEMU. Not yet
+tested on real hardware: GPU drivers, Tor/Tailscale end to end, fingerprint login.
+
 ## 1.0.0-rc.1 — 2026-09-28
 
 First release candidate of the rebuilt distribution.

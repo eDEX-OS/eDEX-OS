@@ -51,6 +51,8 @@ jobs:
           ISO=$(ls edex-os-*.iso | head -1)
           NEW="${{ steps.version.outputs.iso_name }}"
           [ "$ISO" = "$NEW" ] || mv "$ISO" "$NEW"
+          SIZE=$(stat -c %s "$NEW"); echo "ISO size: $SIZE bytes"
+          [ "$SIZE" -lt 2147483648 ] || { echo "::error::ISO is $SIZE bytes, over the 2 GiB GitHub release-asset limit"; exit 1; }
           rm -f ./*.sha256 ./*.sha512
           sha256sum "$NEW" > "$NEW.sha256"
           sha512sum "$NEW" > "$NEW.sha512"

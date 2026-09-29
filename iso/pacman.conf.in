@@ -1,6 +1,9 @@
 # pacman.conf used by mkarchiso while building the eDEX-OS ISO. Generated into iso/pacman.conf by
 # scripts/ci-build-iso.sh with @REPO_DIR@ pointing at the local [edex-os] repository.
 [options]
+# Keep the live image (and the ISO) under GitHub's 2 GiB release-asset limit; documentation is
+# reinstalled with each package on a normal upgrade of the installed system.
+NoExtract = usr/share/doc/* usr/share/gtk-doc/*
 HoldPkg      = pacman glibc
 Architecture = auto
 Color
