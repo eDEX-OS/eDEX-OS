@@ -57,8 +57,10 @@ grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-OS --no-nvram >/dev/null 2>&1 || true
 printf 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 plymouth.enable=0 console=tty0 console=ttyS0,115200"\nGRUB_TIMEOUT=2\nGRUB_TERMINAL_OUTPUT="console serial"\nGRUB_SERIAL_COMMAND="serial --speed=115200"\n' > /etc/default/grub.d/99-ci.cfg
 grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1
-pacman -Rns --noconfirm edex-os-live edex-os-calamares-config cachyos-calamares edex-os-boost-compat mkinitcpio-archiso >/dev/null 2>&1 || true
 /usr/share/edex-os/install-steps/80-postinstall.sh >/dev/null
+# Same order as the Calamares sequence: post-install first, then drop the live-only packages
+# (the post-install script ships in edex-os-calamares-config).
+pacman -Rns --noconfirm edex-os-live edex-os-calamares-config cachyos-calamares edex-os-boost-compat mkinitcpio-archiso >/dev/null 2>&1 || true
 # CI-only: report on the serial console once the greeter is up on the installed system.
 cat > /etc/systemd/system/edex-ci-installed.service <<'UNIT'
 [Unit]
