@@ -5,7 +5,8 @@
 set -euo pipefail
 OUT=/dev/console
 ROOT=/mnt/edex
-DISK=${EDEX_CI_DISK:-$(lsblk -dpno NAME,TYPE | awk '$2=="disk" && $1 !~ /loop|sr|zram/ {print $1; exit}')}
+# First whole disk of at least 8 GiB, never a floppy, loop, optical, zram or ram device.
+DISK=${EDEX_CI_DISK:-$(lsblk -dbpno NAME,TYPE,SIZE | awk '$2=="disk" && $1 !~ /\/dev\/(fd|loop|sr|zram|ram)/ && $3 >= 8*1024*1024*1024 {print $1; exit}')}
 fail() { echo "EDEX_CI: install-fail ($*)" > $OUT; exit 1; }
 trap 'fail "step failed at line $LINENO"' ERR
 [ -n "$DISK" ] || fail "no disk"
