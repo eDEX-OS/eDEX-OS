@@ -35,6 +35,8 @@ fi
 msg "installing build tools"
 pacman -Syu --noconfirm --needed base-devel git archiso squashfs-tools dosfstools mtools libisoburn grub syslinux \
     librsvg imagemagick ttf-dejavu sudo namcap >/dev/null
+# The checkout is mounted from the host (another owner): let git read it for versions and archives.
+git config --global --add safe.directory '*'
 
 if [ "${EDEX_SKIP_PACKAGES:-0}" = 1 ] && [ -f "$REPO_DIR/edex-os.db" ]; then
     msg "reusing the packages already in $REPO_DIR (EDEX_SKIP_PACKAGES=1)"

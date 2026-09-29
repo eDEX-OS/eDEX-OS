@@ -42,7 +42,7 @@ jobs:
           sudo modprobe loop
           docker run --rm --privileged --device /dev/fuse -v "$PWD:/workspace" -w /workspace \
             -e SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" archlinux:latest \
-            bash -c 'git config --global --add safe.directory "*" && bash scripts/ci-build-iso.sh'
+            bash scripts/ci-build-iso.sh
           sudo chown -R "$USER:$USER" out/
 
       - name: Rename and checksum

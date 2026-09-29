@@ -9,7 +9,10 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-24.04
-    container: archlinux:latest
+    container:
+      image: archlinux:latest
+      # nft -c needs CAP_NET_ADMIN (in the container's own network namespace) to check rulesets.
+      options: --cap-add=NET_ADMIN
     steps:
       - name: Tools
         run: pacman -Syu --noconfirm --needed git shellcheck yamllint nftables python >/dev/null
