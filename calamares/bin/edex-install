@@ -10,4 +10,5 @@ export QT_QPA_PLATFORMTHEME=qt6ct
 export EDEX_INSTALL=1
 exec pkexec env DISPLAY="${DISPLAY:-}" WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-}" XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-}" \
     QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=qt6ct XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-eDEX-DE}" \
+    LD_LIBRARY_PATH=/usr/lib/edex-os/boost-compat \
     /usr/bin/calamares -c /etc/edex-os/calamares "$@"

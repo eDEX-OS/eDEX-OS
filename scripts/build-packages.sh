@@ -88,6 +88,16 @@ build_local edex-os-calamares-config calamares
 build_local edex-os-greetd-config packaging/greetd
 build_local edex-os-live live
 
+# Compatibility shim with a pinned upstream source (not built from this tree).
+if ! ls "$OUT"/edex-os-boost-compat-*.pkg.tar.zst >/dev/null 2>&1; then
+    dir="$WORK/edex-os-boost-compat"
+    rm -rf -- "${dir:?}"; mkdir -p "$dir"
+    cp "$ROOT/packages/edex-os-boost-compat/PKGBUILD" "$dir/"
+    chown -R "$BUILDER" "$dir"
+    msg "building edex-os-boost-compat"
+    (cd "$dir" && as_builder makepkg -d --noconfirm -f --noprogressbar >/dev/null)
+fi
+
 # 3. Pinned AUR packages.
 while read -r name commit; do
     [ -z "$name" ] || [ "${name#\#}" != "$name" ] && continue

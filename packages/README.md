@@ -12,6 +12,7 @@ build consumes. No package fetches sources from the network:
 | `edex-os-calamares-config` | `calamares/` | installer config under `/etc/edex-os/calamares`, `edex-install` |
 | `edex-os-greetd-config` | `packaging/greetd/` | greetd drop-in for the eDEX greeter, PAM fingerprint line |
 | `edex-os-live` | `live/` | live-ISO-only bits, removed by the installer |
+| `edex-os-boost-compat` | pinned Arch archive package | Boost.Python 1.91 for the CachyOS Calamares build; live medium only |
 | AUR: `yay-bin`, `paru-bin`, `lyrebird`, `snowflake-pt-client` | `scripts/aur-packages.txt` | pinned commits |
 
 `pkgver` is injected by the build script from `git describe`; the PKGBUILDs carry a placeholder.

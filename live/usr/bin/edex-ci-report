@@ -15,9 +15,9 @@ echo "EDEX_CI: boot-ok" > $out
     echo "EDEX_CI: failed-units-end"
 } > $out 2>&1
 # The installer must be runnable (catches upstream library mismatches in cachyos-calamares).
-if ldd /usr/bin/calamares 2>/dev/null | grep -q "not found"; then
+if LD_LIBRARY_PATH=/usr/lib/edex-os/boost-compat ldd /usr/bin/calamares 2>/dev/null | grep -q "not found"; then
     echo "EDEX_CI: installer-broken" > $out
-    ldd /usr/bin/calamares | grep "not found" > $out
+    LD_LIBRARY_PATH=/usr/lib/edex-os/boost-compat ldd /usr/bin/calamares | grep "not found" > $out
 else
     echo "EDEX_CI: installer-ok" > $out
 fi

@@ -91,8 +91,10 @@ docs/                    building, testing, architecture, installer, privacy
 * No Secure Boot (shim/MOK) support; disable Secure Boot or enrol your own keys.
 * NVIDIA: install `nvidia-open-dkms` after installation and add `nvidia_drm.modeset=1`; the live medium
   uses the open-source stack (`nomodeset` entry available).
-* The installer is the CachyOS Calamares build; when CachyOS ships a Calamares linked against an older
-  boost than Arch, the boot test fails with `EDEX_CI: installer-broken` until CachyOS rebuilds it.
+* The installer is the CachyOS Calamares build. It is currently linked against boost 1.91 while Arch ships a
+  newer boost, so the live medium carries `edex-os-boost-compat` (Boost.Python 1.91 from the Arch archive,
+  checksum-pinned, in a private library directory used only by `edex-install`; removed on install). Drop it
+  once CachyOS rebuilds Calamares; the boot test's `installer-ok` marker checks that the installer links.
 * Tor transparent mode + Tailscale: Tailscale traffic bypasses Tor by design (WireGuard cannot go through
   Tor); use `--strict` if that matters.
 * ARM images and X11 sessions are out of scope.
