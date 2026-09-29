@@ -15,7 +15,7 @@ sed 's|%PKGBASE%|linux-cachyos|g' "$ROOT/usr/share/mkinitcpio/hook.preset" > "$R
 rm -f "$ROOT/boot/initramfs-linux-cachyos.img"
 # Nothing from the live boot must leak into the installed system.
 rm -f "$ROOT/etc/systemd/system/etc-pacman.d-gnupg.mount" "$ROOT/etc/systemd/system/multi-user.target.wants/pacman-init.service" "$ROOT/etc/systemd/system/pacman-init.service"
-rm -f "$ROOT/etc/systemd/system/multi-user.target.wants/edex-setup-live.service" "$ROOT/etc/systemd/system/graphical.target.wants/edex-ci-report.service" "$ROOT/etc/systemd/system/graphical.target.wants/edex-ci-install.service"
+rm -f "$ROOT/etc/systemd/system/multi-user.target.wants/edex-setup-live.service" "$ROOT/etc/systemd/system/graphical.target.wants/edex-ci-report.service" "$ROOT/etc/systemd/system/multi-user.target.wants/edex-ci-install.service"
 rm -f "$ROOT/etc/pacman.d/hooks/uncomment-mirrors.hook" "$ROOT/etc/pacman.d/hooks/zzzz99-remove-custom-hooks-from-airootfs.hook"
 rm -f "$ROOT/etc/motd" "$ROOT/etc/issue"
 rm -f "$ROOT/etc/systemd/system/greetd.service.d/live.conf"

@@ -41,7 +41,7 @@ timeout --foreground "$TIMEOUT" qemu-system-x86_64 $ACCEL -m 4096 -smp 2 \
     -drive "file=$ISO,media=cdrom,readonly=on,if=ide" \
     -drive "file=$DISK,format=qcow2,if=virtio" \
     -kernel "$TMP/arch/boot/x86_64/vmlinuz-linux-cachyos" -initrd "$TMP/initrd.img" \
-    -append "archisobasedir=arch archisolabel=$LABEL console=tty0 console=ttyS0,115200 edex.ci=install systemd.firstboot=off plymouth.enable=0" \
+    -append "archisobasedir=arch archisolabel=$LABEL console=tty0 console=ttyS0,115200 edex.ci=install systemd.unit=multi-user.target systemd.firstboot=off plymouth.enable=0" \
     -vga virtio -display none -device virtio-rng-pci -netdev user,id=n0 -device virtio-net-pci,netdev=n0 \
     -serial "file:$OUT/install.log" -monitor none -no-reboot >/dev/null 2>&1 || true
 grep -q "EDEX_CI: install-ok" "$OUT/install.log" || { echo "installation FAILED"; tail -60 "$OUT/install.log"; exit 1; }

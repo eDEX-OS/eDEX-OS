@@ -1,6 +1,7 @@
 [Unit]
 Description=eDEX-OS unattended CI installation to the first disk
-After=graphical.target network-online.target
+# The test boots with systemd.unit=multi-user.target: no desktop is needed to install.
+After=multi-user.target network-online.target
 Wants=network-online.target
 ConditionKernelCommandLine=edex.ci=install
 
@@ -9,6 +10,7 @@ Type=oneshot
 ExecStart=/usr/bin/edex-ci-install
 StandardOutput=journal+console
 StandardError=journal+console
+TimeoutStartSec=infinity
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
