@@ -15,7 +15,7 @@ services-systemd → packages → grubcfg → bootloader → shellprocess@postin
   `linux-cachyos`.
 * `users` creates the account (groups incl. `tor` for the control cookie) and sets the root password.
 * `services-systemd` enables NetworkManager, greetd, tailscaled, nftables, dnscrypt-proxy.socket,
-  edex-tor-mode, edex-tailscale-operator, bluetooth, power-profiles-daemon, accounts-daemon, fstrim.
+  edex-tor-mode, edex-tailscale-operator, bluetooth, power-profiles-daemon, fstrim (accounts-daemon is D-Bus-activated on demand).
 * `packages` removes `edex-os-live`, `edex-os-calamares-config`, `cachyos-calamares`, `mkinitcpio-archiso`.
 * `grubcfg`/`bootloader` install GRUB with the eDEX theme, os-prober on, EFI fallback entry.
 * `shellprocess@postinstall` (`install-steps/80-postinstall.sh`, chrooted) enables the CPU-optimised
