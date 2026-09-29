@@ -101,6 +101,16 @@ for name in edex-os-boost-compat snowflake-pt-client; do
     rm -rf -- "${dir:?}"; mkdir -p "$dir"
     cp "$ROOT/packages/$name/PKGBUILD" "$dir/"
     chown -R "$BUILDER" "$dir"
+    # Fetch and checksum the pinned source first, retrying: upstream archive endpoints are
+    # intermittently unavailable.
+    fetched=0
+    for attempt in 1 2 3 4 5; do
+        if (cd "$dir" && as_builder makepkg --verifysource --noconfirm >/dev/null 2>&1); then fetched=1; break; fi
+        msg "source download for $name failed (attempt $attempt); retrying"
+        find "$dir" -maxdepth 1 -name '*.part' -delete
+        sleep $((attempt * 15))
+    done
+    [ "$fetched" = 1 ] || { echo "could not download the source of $name" >&2; exit 1; }
     msg "building $name"
     (cd "$dir" && as_builder makepkg -s --noconfirm -f --noprogressbar >/dev/null)
 done
