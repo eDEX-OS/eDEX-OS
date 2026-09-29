@@ -54,7 +54,7 @@ systemctl disable pacman-init edex-setup-live edex-ci-report edex-ci-install sys
 grub-install --target=i386-pc "$(lsblk -dpno PKNAME "$(findmnt -no SOURCE /boot/efi)" | head -1)" >/dev/null
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-OS --removable >/dev/null 2>&1 || true
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=eDEX-OS --no-nvram >/dev/null 2>&1 || true
-printf 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 console=tty0 console=ttyS0,115200"\nGRUB_TIMEOUT=2\nGRUB_TERMINAL_OUTPUT="console serial"\nGRUB_SERIAL_COMMAND="serial --speed=115200"\n' > /etc/default/grub.d/99-ci.cfg
+printf 'GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 plymouth.enable=0 console=tty0 console=ttyS0,115200"\nGRUB_TIMEOUT=2\nGRUB_TERMINAL_OUTPUT="console serial"\nGRUB_SERIAL_COMMAND="serial --speed=115200"\n' > /etc/default/grub.d/99-ci.cfg
 grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1
 pacman -Rns --noconfirm edex-os-live edex-os-calamares-config cachyos-calamares mkinitcpio-archiso >/dev/null 2>&1 || true
 /usr/share/edex-os/install-steps/80-postinstall.sh >/dev/null
