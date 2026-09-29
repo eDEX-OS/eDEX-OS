@@ -6,6 +6,14 @@
 set -u
 out=/dev/console
 echo "EDEX_CI: boot-ok" > $out
+{
+    echo "EDEX_CI: failed-units-begin"
+    systemctl --failed --no-legend --no-pager
+    for u in $(systemctl --failed --no-legend --plain | awk '{print $1}'); do
+        journalctl -b -u "$u" --no-pager -n 15
+    done
+    echo "EDEX_CI: failed-units-end"
+} > $out 2>&1
 # The installer must be runnable (catches upstream library mismatches in cachyos-calamares).
 if ldd /usr/bin/calamares 2>/dev/null | grep -q "not found"; then
     echo "EDEX_CI: installer-broken" > $out

@@ -2,6 +2,15 @@
 # First-boot setup of the live environment (edex-setup-live.service).
 set -euo pipefail
 HOME_DIR=/home/liveuser
+GROUPS_LIVE=wheel,adm,audio,video,input,storage,network,rfkill,users,tor
+# The live user is created here: sysusers.d entries added to the image after pacstrap are not
+# applied at boot (systemd-sysusers is gated on ConditionNeedsUpdate=/etc).
+if ! id liveuser >/dev/null 2>&1; then
+    for g in ${GROUPS_LIVE//,/ }; do getent group "$g" >/dev/null || groupadd -r "$g"; done
+    useradd -u 1000 -U -m -k /etc/skel -c "eDEX Live User" -s /usr/bin/fish -G "$GROUPS_LIVE" liveuser
+else
+    usermod -aG "$GROUPS_LIVE" liveuser
+fi
 # No password on the live medium (sudo is NOPASSWD, the greeter accepts the empty password).
 passwd -d liveuser >/dev/null 2>&1 || true
 if [ ! -e "$HOME_DIR/.config/hypr/hyprland.lua" ]; then
