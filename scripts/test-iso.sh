@@ -30,6 +30,9 @@ find_ovmf() {
     done
     return 1
 }
+for tool in qemu-system-x86_64 bsdtar; do
+    command -v "$tool" >/dev/null || { echo "missing required tool: $tool" >&2; exit 2; }
+done
 # shellcheck disable=SC2054
 if [ -w /dev/kvm ]; then ACCEL=(-enable-kvm -cpu host); else ACCEL=(-accel tcg,thread=multi -cpu max); fi
 # Without KVM the live boot (pacman keyring population in particular) takes far longer.

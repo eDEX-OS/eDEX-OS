@@ -98,7 +98,7 @@ jobs:
       - name: QEMU
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y qemu-system-x86 ovmf
+          sudo apt-get install -y qemu-system-x86 ovmf libarchive-tools
           sudo chmod a+rw /dev/kvm || true
       - name: Boot and check markers
         run: scripts/test-iso.sh --mode ${{ matrix.mode }} --timeout 900 ${{ matrix.mode == 'bios' && '--no-shell' || '' }}
