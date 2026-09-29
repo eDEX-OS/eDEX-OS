@@ -73,7 +73,10 @@ else
     msg "building edex-de from desktop/ ($DE_REV)"
     DE_WORK="${WORK:?}/edex-de"
     rm -rf -- "${DE_WORK:?}"
-    cp -a "$ROOT/desktop" "$DE_WORK"
+    # A submodule's .git is only a pointer file, so clone it into a standalone repository at the
+    # pinned commit (the package script uses `git archive`).
+    git clone -q --no-hardlinks "$ROOT/desktop" "$DE_WORK"
+    git -C "$DE_WORK" checkout -q "$(git -C "$ROOT/desktop" rev-parse HEAD)"
     chown -R "$BUILDER" "$DE_WORK"
     rm -f "$OUT"/edex-de-*.pkg.tar.zst
     # The submodule's script writes the package next to its PKGBUILD unless PKGDEST is set.
