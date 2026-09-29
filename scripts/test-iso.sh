@@ -8,7 +8,7 @@
 #
 #   scripts/test-iso.sh [--mode uefi|bios|both] [--iso path] [--timeout secs] [--no-shell]
 set -euo pipefail
-MODE=both; ISO=""; TIMEOUT=${EDEX_TEST_TIMEOUT:-900}; MENU_TIMEOUT=300; SHELL_TEST=1
+MODE=both; ISO=""; TIMEOUT=${EDEX_TEST_TIMEOUT:-}; MENU_TIMEOUT=300; SHELL_TEST=1
 while [ $# -gt 0 ]; do
     case "$1" in
         --mode) MODE=$2; shift 2 ;;
@@ -32,6 +32,8 @@ find_ovmf() {
 }
 # shellcheck disable=SC2054
 if [ -w /dev/kvm ]; then ACCEL=(-enable-kvm -cpu host); else ACCEL=(-accel tcg,thread=multi -cpu max); fi
+# Without KVM the live boot (pacman keyring population in particular) takes far longer.
+if [ -z "$TIMEOUT" ]; then if [ -w /dev/kvm ]; then TIMEOUT=900; else TIMEOUT=2400; fi; fi
 # shellcheck disable=SC2054
 COMMON=(-m 4096 -smp 2 -vga virtio -display none -device virtio-rng-pci -netdev user,id=n0 -device virtio-net-pci,netdev=n0 -monitor none -no-reboot)
 

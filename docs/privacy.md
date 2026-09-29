@@ -6,7 +6,7 @@
 | Tor modes | `/usr/bin/edex-tor-mode`, `edex-tor-mode.service`, `/usr/share/edex-os/tor/transparent.nft` | state in `/var/lib/edex-os/tor-mode` and `/run/edex-tor-mode`; see the ruleset for the exact policy |
 | Bridges | `/usr/bin/edex-tor-bridges` → `/etc/tor/torrc.d/40-bridges.conf` | obfs4 via `lyrebird`, Snowflake via `snowflake-pt-client` |
 | Firewall | `/etc/edex-os/nftables.conf` (`inet edex-filter`), `nftables.service.d/edex.conf` | never flushes the ruleset; Tailscale's and Tor's tables coexist |
-| DNS | `/etc/edex-os/dnscrypt-proxy.toml`, `dnscrypt-proxy.socket`, `/etc/edex-os/resolv.conf` via tmpfiles, NM `dns=none` | DNSSEC + no-log resolvers required; queries go to Tor's DNSPort in transparent mode |
+| DNS | `/etc/edex-os/dnscrypt-proxy.toml`, `dnscrypt-proxy.socket`, `/etc/edex-os/resolv.conf` via tmpfiles, NM `dns=none` | DNSSEC + no-log resolvers required; a signed resolver list shipped in `/usr/share/edex-os/dnscrypt` (refresh with `scripts/update-dnscrypt-resolvers.sh`) seeds the cache so DNS works when the list cannot be downloaded; queries go to Tor's DNSPort in transparent mode |
 | NetworkManager | `conf.d/20-edex-privacy.conf` | random MACs per connection, randomised scan MACs, IPv6 privacy extensions, no connectivity probes |
 | Kernel | `sysctl.d/90-edex-privacy.conf` | kptr/dmesg/bpf/ptrace restrictions, redirects off, rp_filter, IPv6 temporary addresses, forwarding on (for Tailscale exit nodes only; the firewall gates it) |
 | Tailscale | `edex-tailscale-operator` | first login user (or the one given) becomes `tailscale set --operator`; exit-node, LAN access and advertising are set from the DE |
