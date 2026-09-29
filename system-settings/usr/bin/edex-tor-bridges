@@ -43,7 +43,7 @@ case "${1:-}" in
         } > "$CONF"
         ;;
     snowflake)
-        [ -x /usr/bin/snowflake-client ] || { echo "snowflake-pt-client is not installed" >&2; exit 1; }
+        [ -x /usr/bin/snowflake-pt-client ] || { echo "snowflake-pt-client is not installed" >&2; exit 1; }
         cp "$SNOWFLAKE" "$CONF"
         ;;
     clear)

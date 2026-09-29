@@ -91,15 +91,19 @@ build_local edex-os-calamares-config calamares
 build_local edex-os-greetd-config packaging/greetd
 build_local edex-os-live live
 
-# Compatibility shim with a pinned upstream source (not built from this tree).
-if ! ls "$OUT"/edex-os-boost-compat-*.pkg.tar.zst >/dev/null 2>&1; then
-    dir="$WORK/edex-os-boost-compat"
+# Packages with a checksum-pinned upstream source (not built from this tree).
+for name in edex-os-boost-compat snowflake-pt-client; do
+    if ls "$OUT/$name"-*.pkg.tar.zst >/dev/null 2>&1 && [ "${EDEX_REBUILD_PINNED:-0}" != 1 ]; then
+        msg "reusing $name already in $OUT"
+        continue
+    fi
+    dir="$WORK/$name"
     rm -rf -- "${dir:?}"; mkdir -p "$dir"
-    cp "$ROOT/packages/edex-os-boost-compat/PKGBUILD" "$dir/"
+    cp "$ROOT/packages/$name/PKGBUILD" "$dir/"
     chown -R "$BUILDER" "$dir"
-    msg "building edex-os-boost-compat"
-    (cd "$dir" && as_builder makepkg -d --noconfirm -f --noprogressbar >/dev/null)
-fi
+    msg "building $name"
+    (cd "$dir" && as_builder makepkg -s --noconfirm -f --noprogressbar >/dev/null)
+done
 
 # 3. Pinned AUR packages.
 while read -r name commit; do
