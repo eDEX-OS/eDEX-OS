@@ -25,7 +25,7 @@ jobs:
       - name: Release notes from CHANGELOG
         run: |
           V="${{ github.event.workflow_run.head_branch }}"; V=${V#v}
-          awk -v v="$V" 'BEGIN{p=0} /^## /{p = index($0, v) > 0} p' CHANGELOG.md > notes.md
+          awk -v v="$V" 'BEGIN{p=0} /^## /{p = ($2 == v)} p' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "eDEX-OS $V" > notes.md
           printf '\n### Verify\n```\nsha256sum -c edex-os-x86_64-*.iso.sha256\n```\n' >> notes.md
       - uses: softprops/action-gh-release@v2
