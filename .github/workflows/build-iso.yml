@@ -8,7 +8,17 @@ on:
     branches: [main]
   schedule:
     - cron: "17 4 * * 1"
+  # From the Actions tab; with release_tag set, the build is published as that release once the
+  # boot and install tests pass (the tag is created on the built commit).
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Tag to create and release, e.g. v1.2.0 (leave empty for a test build)"
+        required: false
+        default: ""
+
+env:
+  RELEASE_TAG: ${{ inputs.release_tag }}
 
 jobs:
   build-iso:
@@ -34,6 +44,7 @@ jobs:
         run: |
           V=$(date +%Y.%m.%d)
           [[ "$GITHUB_REF" == refs/tags/* ]] && V="${GITHUB_REF_NAME#v}"
+          [ -n "$RELEASE_TAG" ] && V="${RELEASE_TAG#v}"
           echo "version=$V" >> "$GITHUB_OUTPUT"
           echo "iso_name=edex-os-x86_64-$V.iso" >> "$GITHUB_OUTPUT"
 
@@ -59,8 +70,8 @@ jobs:
           tar -czf "edex-os-repo-${{ steps.version.outputs.version }}.tar.gz" -C repo .
           cat "$NEW.sha256"
 
-      - name: GPG sign (tags)
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: GPG sign (releases)
+        if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -130,3 +141,39 @@ jobs:
         with:
           name: install-logs
           path: out/test/*.log
+
+  # Publishes the tested ISO: on a v* tag push, or a dispatch with release_tag.
+  release:
+    name: Publish release
+    needs: [build-iso, test-boot, test-install]
+    if: startsWith(github.ref, 'refs/tags/') || inputs.release_tag != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ inputs.release_tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: edex-os-iso
+          path: out/
+      - name: Release notes from CHANGELOG
+        run: |
+          V=${TAG#v}
+          awk -v v="$V" 'BEGIN{p=0} /^## /{p = ($2 == v)} p' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "eDEX-OS $V" > notes.md
+          printf '\n### Verify\n```\nsha256sum -c edex-os-x86_64-*.iso.sha256\n```\n' >> notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          name: eDEX-OS ${{ env.TAG }}
+          body_path: notes.md
+          prerelease: ${{ contains(env.TAG, '-') }}
+          files: |
+            out/*.iso
+            out/*.sha256
+            out/*.sha512
+            out/*.asc
+            out/*.tar.gz

@@ -17,5 +17,7 @@
 ## Releasing
 
 1. Update `CHANGELOG.md`.
-2. Tag `vX.Y.Z` (pre-releases `vX.Y.Z-rc.N`) and push; `build-iso.yml` builds and tests the ISO and
-   `release.yml` publishes it with checksums (and a GPG signature when `GPG_PRIVATE_KEY` is set).
+2. Tag `vX.Y.Z` (pre-releases `vX.Y.Z-rc.N`) and push, or run **Build ISO** from the Actions tab with
+   `release_tag` set (it creates the tag on the built commit). `build-iso.yml` builds and tests the
+   ISO and its `release` job publishes it with checksums (and a GPG signature when `GPG_PRIVATE_KEY`
+   is set).

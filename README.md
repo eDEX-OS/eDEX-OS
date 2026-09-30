@@ -53,7 +53,7 @@ sudo tests/privacy/tor-mode-test.sh # on a live system: fail-closed policy, roll
 ```
 
 CI runs all of these on every push (`build-iso.yml`), builds the packages on package changes
-(`packages.yml`), and publishes tagged builds with checksums (`release.yml`). `bump-desktop.yml` opens a
+(`packages.yml`), and publishes tagged builds with checksums once the boot and install tests pass. `bump-desktop.yml` opens a
 pull request when eDEX-DE has a new release tag.
 
 ## Repository layout

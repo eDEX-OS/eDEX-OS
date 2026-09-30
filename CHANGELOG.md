@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.2.0 — 2026-09-30
+
+Ships eDEX-DE 3.1.0.
+
+* **Keyboard and mouse work in the live session and on installed systems** (the shell and the
+  greeter never picked up the input devices); the terminal has focus from login.
+* Tapping the Windows key opens the launcher; SUPER+Return shows and focuses the terminal.
+* Workspace buttons, Log out, launching apps and screen blanking work with Hyprland 0.56.
+* The on-screen keyboard is off by default (a setting for touchscreens).
+* Much lower idle CPU, especially without a GPU driver (VMs).
+* Releases can be started from the Actions tab (Build ISO with `release_tag`); publishing now waits
+  for the boot and install tests. Release notes take only the matching changelog section.
+
+Tested in QEMU: live boot (UEFI and BIOS), typing and launcher in the live session, unattended
+install booting both ways.
+
+## 1.1.0 — 2026-09-29
+
+Same build as 1.0.0 (CI fixes for the release: git in the build container, `CAP_NET_ADMIN` for the
+nft lint, `bsdtar` for the boot test, xz-compressed root image to fit GitHub's 2 GiB asset limit).
+
 ## 1.0.0 — 2026-09-29
 
 First stable release: everything in 1.0.0-rc.1, plus
