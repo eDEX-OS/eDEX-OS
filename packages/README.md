@@ -14,6 +14,6 @@ build consumes. No package fetches sources from the network:
 | `edex-os-live` | `live/` | live-ISO-only bits, removed by the installer |
 | `edex-os-boost-compat` | pinned Arch archive package | Boost 1.91 runtime for the CachyOS Calamares build; live medium only |
 | `snowflake-pt-client` | pinned release tarball | Snowflake pluggable transport (`/usr/bin/snowflake-pt-client`) |
-| AUR: `yay-bin`, `paru-bin`, `lyrebird` | `scripts/aur-packages.txt` | pinned commits |
+| AUR: `lyrebird`, `brave-origin-bin` | `scripts/aur-packages.txt` | pinned commits |
 
 `pkgver` is injected by the build script from `git describe`; the PKGBUILDs carry a placeholder.

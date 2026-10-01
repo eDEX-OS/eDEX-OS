@@ -15,13 +15,15 @@ Hyprland, with a matching greetd login screen.
 | Desktop | Hyprland 0.56 + eDEX-DE 3: terminal, file browser, dashboard, on-screen keyboard, launcher, 14-category settings, privacy panel, notifications, power menu, `edex-greeter` under `cage` |
 | Tor | `edex-tor-mode off / socks5 / transparent`: transparent mode redirects all TCP and DNS through Tor with a **fail-closed** nftables policy (LAN, DHCP and Tailscale excepted; `--strict` blocks Tailscale too) and rolls back if Tor cannot bootstrap; obfs4 (lyrebird) and Snowflake bridges |
 | Tailscale | pre-installed, your user is made the operator, exit nodes / LAN access / advertising from the privacy panel |
-| VPN | WireGuard and OpenVPN through NetworkManager |
+| VPN | WireGuard (create tunnels from the privacy panel) and OpenVPN through NetworkManager |
 | DNS | dnscrypt-proxy (DNSSEC, no-log resolvers) is the system resolver; NetworkManager never rewrites `resolv.conf` |
 | Firewall | nftables `edex-filter`: inbound denied, Tailscale allowed, forwarding only for Tailscale exit-node use |
 | Privacy defaults | MAC randomisation, RFC 4941 IPv6 temporary addresses, no connectivity probes, kernel hardening sysctls |
 | Installer | Calamares (CachyOS build) with an eDEX-OS configuration: btrfs subvolumes, LUKS, GRUB (UEFI + BIOS), Plymouth, greetd, live bits removed |
 | Boot | GRUB (UEFI) and syslinux (BIOS) with eDEX themes, Plymouth splash, copy-to-RAM / safe-graphics / serial entries |
-| Extras | `yay`, `paru`, kitty, fish, nemo, pipewire, bluetooth, fprintd, power-profiles-daemon |
+| Software | pacman with the Arch and CachyOS repositories, `yay` and `paru` for the AUR, Flatpak with Flathub, GNOME Software (Flatpak + pacman via PackageKit), KDE Discover (Flatpak), Homebrew (`brew` installs itself into `/home/linuxbrew/.linuxbrew` on first use) |
+| Apps | Brave Origin (default browser), kitty, fish, nemo; Qt, GTK and KDE apps follow the eDEX theme (qt6ct, adw-gtk3, Papirus) |
+| Extras | pipewire, bluetooth, fprintd, power-profiles-daemon |
 
 Live medium: user `liveuser` (no password, passwordless sudo), root password `edex`. The desktop starts
 automatically; press the **INSTALL** button in the top bar, run `edex-install`, or pick "Install eDEX-OS"

@@ -9,8 +9,6 @@ edex-os-calamares-config
 edex-os-greetd-config
 edex-os-live
 edex-os-boost-compat
-yay-bin
-paru-bin
 lyrebird
 snowflake-pt-client
 
@@ -49,6 +47,8 @@ cachyos-settings
 cachyos-hooks
 chwd
 cachyos-rate-mirrors
+yay
+paru
 cachyos-calamares
 
 # === BOOT ===

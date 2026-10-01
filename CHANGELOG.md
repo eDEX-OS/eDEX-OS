@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.3.0 — 2026-10-01
+
+Ships eDEX-DE 3.2.0.
+
+* **Software:** Flatpak with Flathub configured system-wide, GNOME Software (Flatpak and pacman
+  packages through PackageKit), KDE Discover (Flatpak), Homebrew (`brew` bootstraps itself into
+  `/home/linuxbrew/.linuxbrew` on first run; shells pick it up afterwards), Brave Origin as the
+  default browser.
+* **paru works:** the AUR `paru-bin` build was linked against an older libalpm and failed to start;
+  `yay` and `paru` now come from the CachyOS repository, built against the shipped pacman.
+* **Themed apps:** Qt 6 (qt6ct), GTK 3/4 (adw-gtk3, libadwaita colours) and KDE/Kirigami apps use
+  the eDEX colours, font and Papirus-Dark icons.
+* **Privacy panel:** Tor and Tailscale show their real state in the live session; WireGuard tunnels
+  can be created and managed.
+* eDEX Settings and eDEX Privacy appear in app search.
+* SUPER+SHIFT+F hides the side panels for full-width apps.
+* Smaller live initramfs (no `kms` hook: GPU drivers load from the root image) and no Qt 5 Wayland
+  or Breeze icons, keeping the ISO under GitHub's 2 GiB limit.
+* Local package builds no longer reuse stale versions.
+
 ## 1.2.0 — 2026-09-30
 
 Ships eDEX-DE 3.1.0.
