@@ -79,7 +79,7 @@ shell_boot() {
     : > "$log"
     qemu-system-x86_64 "${ACCEL[@]}" "${COMMON[@]}" -drive "file=$ISO,media=cdrom,readonly=on,if=ide" \
         -kernel "$tmp/arch/boot/x86_64/vmlinuz-linux-cachyos" -initrd "$tmp/arch/boot/x86_64/initramfs-linux-cachyos.img" \
-        -append "archisobasedir=arch archisolabel=$label console=tty0 console=ttyS0,115200 edex.ci systemd.firstboot=off plymouth.enable=0 loglevel=4" \
+        -append "archisobasedir=arch archisolabel=$label cow_spacesize=50% console=tty0 console=ttyS0,115200 edex.ci systemd.firstboot=off plymouth.enable=0 loglevel=4" \
         -serial "file:$log" >/dev/null 2>&1 &
     local pid=$!
     local rc=0

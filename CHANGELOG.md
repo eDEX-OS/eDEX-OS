@@ -18,6 +18,8 @@ Ships eDEX-DE 3.2.0.
 * SUPER+SHIFT+F hides the side panels for full-width apps.
 * Smaller live initramfs (no `kms` hook: GPU drivers load from the root image) and no Qt 5 Wayland
   or Breeze icons, keeping the ISO under GitHub's 2 GiB limit.
+* The live session's writable overlay is half of RAM instead of 256 MB, so installing with
+  pacman, the AUR helpers, Flatpak or Homebrew in the live session no longer runs out of space.
 * Local package builds no longer reuse stale versions.
 
 ## 1.2.0 — 2026-09-30
