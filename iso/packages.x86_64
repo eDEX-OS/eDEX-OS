@@ -132,7 +132,6 @@ xdg-utils
 xdg-user-dirs
 desktop-file-utils
 shared-mime-info
-qt5-wayland
 qt6-wayland
 qt6ct
 papirus-icon-theme
