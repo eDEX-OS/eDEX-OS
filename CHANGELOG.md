@@ -15,7 +15,8 @@ Ships eDEX-DE 3.2.0.
 * **Privacy panel:** Tor and Tailscale show their real state in the live session; WireGuard tunnels
   can be created and managed.
 * eDEX Settings and eDEX Privacy appear in app search.
-* SUPER+SHIFT+F hides the side panels for full-width apps.
+* **Window controls:** apps get minimize (into a tab in the centre panel), maximize (full width,
+  controls stay visible) and close buttons in the centre tab strip.
 * Smaller live initramfs (no `kms` hook: GPU drivers load from the root image) and no Qt 5 Wayland
   or Breeze icons, keeping the ISO under GitHub's 2 GiB limit.
 * The live session's writable overlay is half of RAM instead of 256 MB, so installing with
