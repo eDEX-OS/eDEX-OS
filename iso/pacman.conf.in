@@ -4,6 +4,8 @@
 # Keep the live image (and the ISO) under GitHub's 2 GiB release-asset limit; documentation is
 # reinstalled with each package on a normal upgrade of the installed system.
 NoExtract = usr/share/doc/* usr/share/gtk-doc/*
+# ttf-jetbrains-mono-nerd ships six families; eDEX uses "JetBrainsMono Nerd Font" only.
+NoExtract = usr/share/fonts/TTF/JetBrainsMonoNL* usr/share/fonts/TTF/JetBrainsMonoNerdFontMono-* usr/share/fonts/TTF/JetBrainsMonoNerdFontPropo-*
 HoldPkg      = pacman glibc
 Architecture = auto
 Color

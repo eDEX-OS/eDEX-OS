@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# brew on eDEX-OS: Homebrew lives in /home/linuxbrew/.linuxbrew (the official Linux prefix). On first
+# use this installs it with the official installer, then always runs the real brew.
+set -euo pipefail
+PREFIX=/home/linuxbrew/.linuxbrew
+BREW=$PREFIX/bin/brew
+if [ ! -x "$BREW" ]; then
+    if [ "$(id -u)" -eq 0 ]; then
+        echo "brew: run Homebrew as your normal user, not root." >&2
+        exit 1
+    fi
+    printf 'Homebrew is not installed yet. Install it into %s now? [Y/n] ' "$PREFIX"
+    read -r answer || answer=n
+    case "$answer" in [nN]*) exit 1 ;; esac
+    # Create the prefix for this user (asks for your password once); the installer then needs
+    # no further sudo.
+    sudo install -d -o "$(id -un)" -g "$(id -gn)" /home/linuxbrew "$PREFIX"
+    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    [ -x "$BREW" ] || { echo "brew: the Homebrew installer did not finish." >&2; exit 1; }
+    echo "Homebrew is installed. New terminals pick it up automatically."
+fi
+exec "$BREW" "$@"

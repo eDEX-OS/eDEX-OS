@@ -2,3 +2,4 @@
 yay-bin              13e0a4754d106a9252b7479bf1b370fbe454fc48
 paru-bin             92a55429afbec4fceeb2cef843245105307444d2
 lyrebird             a34a76f941d0a9173ca0c0be27bc74d65fc3909a
+brave-origin-bin     21cf6c42dc1b674855c2dcc481fc7864be168ebc

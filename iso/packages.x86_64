@@ -18,7 +18,6 @@ snowflake-pt-client
 base
 base-devel
 linux-cachyos
-linux-cachyos-headers
 linux-firmware
 linux-firmware-whence
 mkinitcpio
@@ -136,6 +135,8 @@ shared-mime-info
 qt5-wayland
 qt6-wayland
 qt6ct
+papirus-icon-theme
+adw-gtk-theme
 gtk3
 gtk4
 noto-fonts
@@ -181,3 +182,14 @@ openvpn
 dnscrypt-proxy
 nftables
 macchanger
+
+# === SOFTWARE ===
+# Flatpak with Flathub (/etc/flatpak/remotes.d), GNOME Software and KDE Discover (PackageKit for
+# pacman packages, Flatpak backends), Brave Origin (AUR, built into [edex-os]).
+flatpak
+packagekit
+gnome-software
+discover
+packagekit-qt6
+flatpak-kcm
+brave-origin-bin
