@@ -56,6 +56,9 @@ build_local() {
     cp "$ROOT/packages/$name"/*.install "$dir/" 2>/dev/null || true
     chown -R "$BUILDER" "$dir"
     msg "building $name"
+    # Drop older builds: repo-add registers every file it is given and the last one wins, which is
+    # not necessarily the newest.
+    rm -f -- "$OUT/$name"-[0-9]*.pkg.tar.zst
     # Local packages are arch-independent config bundles: nothing to build, so dependency
     # resolution (which would need the not-yet-published [edex-os] repo) is skipped.
     (cd "$dir" && as_builder makepkg -d --noconfirm --skipchecksums -f --noprogressbar >/dev/null)

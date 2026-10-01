@@ -183,12 +183,13 @@ nftables
 macchanger
 
 # === SOFTWARE ===
-# Flatpak with Flathub (/etc/flatpak/remotes.d), GNOME Software and KDE Discover (PackageKit for
-# pacman packages, Flatpak backends), Brave Origin (AUR, built into [edex-os]).
+# Flatpak with Flathub (/etc/flatpak/remotes.d). GNOME Software handles Flatpak and, through
+# PackageKit, pacman packages; KDE Discover handles Flatpak only (no packagekit-qt6: KDE and CachyOS
+# advise against Discover managing pacman packages). Brave Origin comes from the AUR, built into
+# [edex-os].
 flatpak
 packagekit
 gnome-software
 discover
-packagekit-qt6
 flatpak-kcm
 brave-origin-bin
