@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0 — 2026-10-02
+
+Ships eDEX-DE 3.3.0.
+
+* **GPU and temperature monitoring** in the system panel for every GPU, and memory shown as the
+  eDEX-UI point grid.
+* **ranger is the file manager:** SUPER+E, the file panel's RANGER button and folders opened from
+  any app start ranger in an eDEX terminal tab. Preview helpers (highlight, atool, poppler,
+  mediainfo, ffmpegthumbnailer) are installed; nemo stays available.
+* **Login screen** redesigned in the shell's style, in each user's own theme.
+* No more "XDG_CURRENT_DESKTOP managed externally" warning from Hyprland at login.
+
 ## 1.3.0 — 2026-10-01
 
 Ships eDEX-DE 3.2.0.

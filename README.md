@@ -22,7 +22,7 @@ Hyprland, with a matching greetd login screen.
 | Installer | Calamares (CachyOS build) with an eDEX-OS configuration: btrfs subvolumes, LUKS, GRUB (UEFI + BIOS), Plymouth, greetd, live bits removed |
 | Boot | GRUB (UEFI) and syslinux (BIOS) with eDEX themes, Plymouth splash, copy-to-RAM / safe-graphics / serial entries |
 | Software | pacman with the Arch and CachyOS repositories, `yay` and `paru` for the AUR, Flatpak with Flathub, GNOME Software (Flatpak + pacman via PackageKit), KDE Discover (Flatpak), Homebrew (`brew` installs itself into `/home/linuxbrew/.linuxbrew` on first use) |
-| Apps | Brave Origin (default browser), kitty, fish, nemo; Qt, GTK and KDE apps follow the eDEX theme (qt6ct, adw-gtk3, Papirus) |
+| Apps | Brave Origin (default browser), ranger (file manager, in the eDEX terminal), kitty, fish, nemo; Qt, GTK and KDE apps follow the eDEX theme (qt6ct, adw-gtk3, Papirus) |
 | Extras | pipewire, bluetooth, fprintd, power-profiles-daemon |
 
 Live medium: user `liveuser` (no password, passwordless sudo), root password `edex`. The desktop starts

@@ -149,6 +149,12 @@ fish
 zsh
 starship
 tmux
+ranger
+highlight
+ffmpegthumbnailer
+poppler
+mediainfo
+atool
 nemo
 nemo-fileroller
 file-roller

@@ -1,5 +1,7 @@
 # eDEX-OS defaults; per-user choices in ~/.config/mimeapps.list take precedence.
 [Default Applications]
+# Folders open in ranger, in an eDEX terminal tab.
+inode/directory=edex-files.desktop;nemo.desktop;
 text/html=brave-origin.desktop
 x-scheme-handler/http=brave-origin.desktop
 x-scheme-handler/https=brave-origin.desktop
