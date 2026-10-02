@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.1 — 2026-10-02
+
+Ships eDEX-DE 3.3.1.
+
+* **Hardware GPU drivers:** `vulkan-radeon`, `vulkan-intel` and `vulkan-nouveau` are installed.
+  Without them, an NVIDIA RTX card on nouveau had no working OpenGL (Mesa runs it on NVK), so the
+  live session and the login screen could not start on machines with that card (seen on a
+  Ryzen 7950X + GeForce desktop), and eDEX-DE drew with the CPU even on AMD and Intel GPUs.
+* **Login never ends at a console:** if the graphical login cannot start, it retries on the GPUs
+  that have a monitor attached and then falls back to a text login (tuigreet) that still starts
+  eDEX-DE. The session retries Hyprland the same way.
+
 ## 1.4.0 — 2026-10-02
 
 Ships eDEX-DE 3.3.0.

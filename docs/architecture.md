@@ -4,7 +4,7 @@
 firmware ─ GRUB (UEFI) / syslinux (BIOS) ─ linux-cachyos + archiso initramfs (plymouth) ─ airootfs.sfs
    systemd: NetworkManager · nftables (edex-filter) · dnscrypt-proxy.socket · tailscaled · tor (on demand)
             edex-tor-mode.service (restores the persisted mode) · edex-tailscale-operator · greetd
-   greetd ── live: initial_session edex-session (liveuser)      installed: cage -s -- edex-greeter
+   greetd ── live: initial_session edex-session (liveuser)      installed: edex-greeter-session (cage + edex-greeter, text fallback)
    edex-session ── start-hyprland ── ~/.config/hypr/hyprland.lua ── require("edex") (/usr/share/edex-de/hypr/edex)
    Hyprland ── edex-de.service (user) ── layer-shell shell; apps tile into the terminal slot
 ```

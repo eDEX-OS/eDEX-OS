@@ -102,6 +102,7 @@ xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 xorg-xwayland
 greetd
+greetd-tuigreet
 cage
 grim
 slurp
@@ -112,6 +113,11 @@ awww
 mesa
 vulkan-icd-loader
 vulkan-swrast
+# Hardware Vulkan drivers: eDEX-DE renders with Vulkan, and on NVIDIA RTX 20 and newer Mesa's
+# nouveau OpenGL runs on NVK (zink); without vulkan-nouveau the compositors cannot use that GPU.
+vulkan-radeon
+vulkan-intel
+vulkan-nouveau
 libnotify
 brightnessctl
 power-profiles-daemon

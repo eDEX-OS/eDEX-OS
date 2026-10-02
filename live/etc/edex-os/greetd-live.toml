@@ -7,5 +7,5 @@ command = "edex-session"
 user = "liveuser"
 
 [default_session]
-command = "cage -s -- edex-greeter"
+command = "edex-greeter-session"
 user = "greeter"
