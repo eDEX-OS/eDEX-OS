@@ -119,6 +119,21 @@ for name in edex-os-boost-compat snowflake-pt-client; do
 done
 
 # 3. Pinned AUR packages.
+fetch_aur() { # name commit dir
+    for attempt in 1 2 3; do
+        rm -rf -- "$3"
+        if as_builder git clone -q "https://aur.archlinux.org/$1.git" "$3" \
+            && (cd "$3" && as_builder git checkout -q "$2"); then
+            return 0
+        fi
+        msg "AUR clone of $1 failed (attempt $attempt)"
+        sleep $((attempt * 5))
+    done
+    msg "using the GitHub AUR mirror for $1"
+    rm -rf -- "$3"
+    as_builder git clone -q --single-branch --branch "$1" https://github.com/archlinux/aur.git "$3" \
+        && (cd "$3" && as_builder git checkout -q "$2")
+}
 while read -r name commit; do
     [ -z "$name" ] || [ "${name#\#}" != "$name" ] && continue
     if ls "$OUT/$name"-*.pkg.tar.zst >/dev/null 2>&1 && [ "${EDEX_REBUILD_AUR:-0}" != 1 ]; then
@@ -126,10 +141,12 @@ while read -r name commit; do
         continue
     fi
     dir="$WORK/aur-$name"
-    if [ ! -d "$dir/.git" ]; then
-        as_builder git clone -q "https://aur.archlinux.org/$name.git" "$dir"
+    # aur.archlinux.org is often unreachable (TLS resets under load); the pinned commit is the
+    # same in the official GitHub mirror, where each package is a branch.
+    if ! fetch_aur "$name" "$commit" "$dir"; then
+        echo "cannot fetch AUR package $name@$commit from the AUR or its GitHub mirror" >&2
+        exit 1
     fi
-    (cd "$dir" && as_builder git fetch -q origin && as_builder git checkout -q "$commit")
     msg "building AUR $name@$commit"
     # Upstream sources are fetched over the network; retry transient download failures.
     ok=0

@@ -50,7 +50,11 @@ jobs:
             scripts/build-packages.sh /workspace/out/repo
             namcap /workspace/out/repo/edex-*.pkg.tar.zst || true
           '
+      # Package file names can contain ':' (epochs, e.g. brave-origin-bin-1:1.96…), which artifact
+      # uploads reject; ship the repository as one tarball.
+      - name: Pack repository
+        run: sudo tar -czf edex-os-packages.tar.gz -C out/repo .
       - uses: actions/upload-artifact@v4
         with:
           name: edex-os-packages
-          path: out/repo/*.pkg.tar.zst
+          path: edex-os-packages.tar.gz

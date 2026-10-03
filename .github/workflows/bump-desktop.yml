@@ -30,9 +30,30 @@ jobs:
             echo "tag=$latest" >> "$GITHUB_OUTPUT"
           fi
       - uses: peter-evans/create-pull-request@v6
+        id: pr
         if: steps.bump.outputs.changed == 'true'
+        # The branch is pushed before the PR is opened. Opening it needs "Allow GitHub Actions to
+        # create and approve pull requests" (Settings → Actions → General); without it, link the
+        # branch in the job summary instead of failing every day.
+        continue-on-error: true
         with:
           branch: bump/edex-de
           title: "Bump eDEX-DE to ${{ steps.bump.outputs.tag }}"
           commit-message: "chore: bump desktop submodule to ${{ steps.bump.outputs.tag }}"
           body: "Automated submodule bump to eDEX-DE ${{ steps.bump.outputs.tag }}. The ISO build and boot tests must pass before merging."
+      - name: Summary
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          if [ "${{ steps.pr.outcome }}" = success ]; then
+            echo "Pull request: ${{ steps.pr.outputs.pull-request-url }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "### eDEX-DE ${{ steps.bump.outputs.tag }} is ready on branch \`bump/edex-de\`"
+              echo
+              echo "Actions may not open pull requests in this repository. Open it yourself:"
+              echo "https://github.com/${{ github.repository }}/compare/main...bump/edex-de?expand=1"
+              echo
+              echo "or allow it under Settings → Actions → General → Workflow permissions."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Could not open the bump pull request (Actions may not create PRs here); branch bump/edex-de is pushed."
+          fi
