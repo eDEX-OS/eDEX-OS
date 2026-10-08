@@ -15,6 +15,13 @@ LIVE=0
 
 log() { echo "edex-gpu-drivers: $*"; }
 
+# One run at a time (the boot service and a manual run, for example).
+exec 9>/run/lock/edex-gpu-drivers.lock 2>/dev/null || exec 9>/tmp/edex-gpu-drivers.lock
+if ! flock -n 9; then
+    log "already running"
+    exit 0
+fi
+
 [ -e "$DONE" ] && { log "already configured ($(cat "$DONE" 2>/dev/null))"; exit 0; }
 # Automated boot/install tests (edex.ci on the kernel command line) stay offline-deterministic.
 if grep -qw 'edex\.ci[^ ]*' /proc/cmdline 2>/dev/null || [ "${EDEX_SKIP_DRIVERS:-0}" = 1 ]; then
@@ -62,10 +69,17 @@ if ! command -v chwd >/dev/null 2>&1; then
 fi
 
 waited=0
+tries=0
 until online; do
-    if [ "$MODE" != --wait ]; then
+    tries=$((tries + 1))
+    # --now (installer): a slow or briefly unreachable mirror is not "offline"; check 3 times.
+    if [ "$MODE" != --wait ] && [ "$tries" -ge 3 ]; then
         log "offline; skipping for now"
         exit 2
+    fi
+    if [ "$MODE" != --wait ]; then
+        sleep 10
+        continue
     fi
     [ "$waited" = 0 ] && log "waiting for internet"
     waited=1
@@ -107,7 +121,9 @@ if [ "$ok" != 1 ]; then
 fi
 
 mkdir -p "$(dirname "$DONE")"
-chwd --list-installed 2>/dev/null | tr -s ' \n' ' ' > "$DONE" || date -Is > "$DONE"
+# "<date> profiles: nvidia-open-dkms amd" (names from chwd's installed-profiles table).
+profiles=$(chwd --list-installed 2>/dev/null | sed -n 's/^│ *\([A-Za-z0-9._-]\+\) *┆.*/\1/p' | grep -vx Name | tr '\n' ' ')
+echo "$(date -Is) profiles: ${profiles:-none}" > "$DONE"
 log "done: $(cat "$DONE")"
 if [ "$nvidia" = 1 ] && [ "$MODE" = --wait ]; then
     if [ "$LIVE" = 1 ]; then
