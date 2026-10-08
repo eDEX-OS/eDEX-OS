@@ -19,6 +19,7 @@ Hyprland, with a matching greetd login screen.
 | DNS | dnscrypt-proxy (DNSSEC, no-log resolvers) is the system resolver; NetworkManager never rewrites `resolv.conf` |
 | Firewall | nftables `edex-filter`: inbound denied, Tailscale allowed, forwarding only for Tailscale exit-node use |
 | Privacy defaults | MAC randomisation, RFC 4941 IPv6 temporary addresses, no connectivity probes, kernel hardening sysctls |
+| Drivers | CachyOS `chwd` installs hardware drivers automatically once there is internet (live USB, installer, or first boot), including the NVIDIA driver |
 | Installer | Calamares (CachyOS build) with an eDEX-OS configuration: btrfs subvolumes, LUKS, GRUB (UEFI + BIOS), Plymouth, greetd, live bits removed |
 | Boot | GRUB (UEFI) and syslinux (BIOS) with eDEX themes, Plymouth splash, copy-to-RAM / safe-graphics / serial entries |
 | Software | pacman with the Arch and CachyOS repositories, `yay` and `paru` for the AUR, Flatpak with Flathub, GNOME Software (Flatpak + pacman via PackageKit), KDE Discover (Flatpak), Homebrew (`brew` installs itself into `/home/linuxbrew/.linuxbrew` on first use) |
@@ -91,8 +92,9 @@ docs/                    building, testing, architecture, installer, privacy
 ## Known limitations
 
 * No Secure Boot (shim/MOK) support; disable Secure Boot or enrol your own keys.
-* NVIDIA: install `nvidia-open-dkms` after installation and add `nvidia_drm.modeset=1`; the live medium
-  uses the open-source stack (`nomodeset` entry available).
+* NVIDIA: the live session draws with the open-source driver (nouveau + NVK) even after chwd has
+  fetched NVIDIA's driver, since the running kernel module cannot be swapped; the installed system
+  boots with NVIDIA's driver. Without internet during and after installation, run `sudo chwd -a`.
 * The installer is the CachyOS Calamares build. It is currently linked against boost 1.91 while Arch ships a
   newer boost, so the live medium carries `edex-os-boost-compat` (the Boost 1.91 runtime from the Arch archive,
   checksum-pinned, in a private library directory used only by `edex-install`; removed on install). Drop it

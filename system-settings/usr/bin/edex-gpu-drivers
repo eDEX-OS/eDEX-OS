@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# edex-gpu-drivers: install the right drivers for this machine's hardware with CachyOS chwd
+# (`chwd -a`), most importantly NVIDIA's driver, which the ISO cannot carry (size).
+#
+#   edex-gpu-drivers --wait     wait for internet, then run once (live USB, installed first boot)
+#   edex-gpu-drivers --now      run only if online right now (installer); exit 2 when offline
+#
+# Runs once per system: /var/lib/edex-os/gpu-drivers.done records success.
+set -uo pipefail
+
+DONE=/var/lib/edex-os/gpu-drivers.done
+MODE=${1:---now}
+LIVE=0
+[ -d /run/archiso ] && LIVE=1
+
+log() { echo "edex-gpu-drivers: $*"; }
+
+[ -e "$DONE" ] && { log "already configured ($(cat "$DONE" 2>/dev/null))"; exit 0; }
+# Automated boot/install tests (edex.ci on the kernel command line) stay offline-deterministic.
+if grep -qw 'edex\.ci[^ ]*' /proc/cmdline 2>/dev/null || [ "${EDEX_SKIP_DRIVERS:-0}" = 1 ]; then
+    log "skipped (CI)"
+    exit 2
+fi
+
+has_nvidia() {
+    local dev class vendor
+    for dev in /sys/bus/pci/devices/*; do
+        class=$(cat "$dev/class" 2>/dev/null) vendor=$(cat "$dev/vendor" 2>/dev/null)
+        [ "$vendor" = 0x10de ] && [ "${class:0:4}" = 0x03 ] && return 0
+    done
+    return 1
+}
+
+# Any HTTP answer from a package mirror counts (front pages may well return 403/404).
+online() {
+    local url code
+    for url in https://mirror.cachyos.org/ https://geo.mirror.pkgbuild.com/ https://archlinux.org/; do
+        code=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' "$url" 2>/dev/null)
+        [ -n "$code" ] && [ "$code" != 000 ] && return 0
+    done
+    return 1
+}
+
+# Tell the logged-in graphical user (eDEX-DE toast, else notify-send).
+notify_user() {
+    local session user uid
+    for session in $(loginctl list-sessions --no-legend 2>/dev/null | awk '{print $1}'); do
+        [ "$(loginctl show-session "$session" -p Type --value 2>/dev/null)" = wayland ] || continue
+        user=$(loginctl show-session "$session" -p Name --value)
+        uid=$(id -u "$user" 2>/dev/null) || continue
+        # shellcheck disable=SC2016 # $0/$1 are expanded by the inner sh
+        runuser -u "$user" -- env XDG_RUNTIME_DIR="/run/user/$uid" \
+            DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+            sh -c 'edex-de ipc notify "$0" "$1" >/dev/null 2>&1 || notify-send "$0" "$1"' "$1" "$2" \
+            2>/dev/null || true
+    done
+}
+
+if ! command -v chwd >/dev/null 2>&1; then
+    log "chwd is not installed"
+    exit 1
+fi
+
+waited=0
+until online; do
+    if [ "$MODE" != --wait ]; then
+        log "offline; skipping for now"
+        exit 2
+    fi
+    [ "$waited" = 0 ] && log "waiting for internet"
+    waited=1
+    sleep 20
+done
+
+nvidia=0
+has_nvidia && nvidia=1
+log "online; running chwd -a (NVIDIA GPU: $([ $nvidia = 1 ] && echo yes || echo no))"
+[ "$nvidia" = 1 ] && [ "$MODE" = --wait ] \
+    && notify_user "Installing graphics drivers" "Downloading the NVIDIA driver for this machine with chwd…"
+
+# Wait while another pacman runs (the user, an AUR helper); clear a lock left by a pacman that
+# was killed (power loss, a stopped service), which would otherwise block every attempt.
+pacman_ready() {
+    local lock=/var/lib/pacman/db.lck
+    for _ in $(seq 1 90); do
+        [ -e "$lock" ] || return 0
+        if ! pgrep -x pacman >/dev/null; then
+            log "removing a stale pacman lock"
+            rm -f "$lock"
+            return 0
+        fi
+        sleep 10
+    done
+    return 1
+}
+
+ok=0
+for attempt in 1 2 3; do
+    if pacman_ready && chwd -a; then ok=1; break; fi
+    log "chwd -a failed (attempt $attempt)"
+    sleep $((attempt * 30))
+done
+if [ "$ok" != 1 ]; then
+    [ "$nvidia" = 1 ] && [ "$MODE" = --wait ] \
+        && notify_user "Graphics drivers" "Installing the NVIDIA driver failed; run 'sudo chwd -a' to retry."
+    exit 1
+fi
+
+mkdir -p "$(dirname "$DONE")"
+chwd --list-installed 2>/dev/null | tr -s ' \n' ' ' > "$DONE" || date -Is > "$DONE"
+log "done: $(cat "$DONE")"
+if [ "$nvidia" = 1 ] && [ "$MODE" = --wait ]; then
+    if [ "$LIVE" = 1 ]; then
+        notify_user "NVIDIA driver ready" "Downloaded and installed; the installer puts it on the installed system."
+    else
+        notify_user "NVIDIA driver installed" "Restart to switch from nouveau to the NVIDIA driver."
+    fi
+fi
+exit 0

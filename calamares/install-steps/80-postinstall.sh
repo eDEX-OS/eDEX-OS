@@ -36,6 +36,15 @@ sed -i '/^liveuser:/d' /etc/passwd /etc/shadow 2>/dev/null || true
 sed -i 's/,liveuser$//; s/:liveuser,/:/; s/:liveuser$/:/' /etc/group /etc/gshadow 2>/dev/null || true
 rm -f /etc/edex-os/greetd-live.toml
 
+echo "==> hardware drivers (chwd; NVIDIA driver when there is an NVIDIA GPU)"
+# Online: installed now (from the cache the live session filled where possible). Offline or on
+# failure: edex-gpu-drivers.service retries on the first boot once there is a network.
+if timeout 1800 /usr/bin/edex-gpu-drivers --now; then
+    echo "    drivers configured"
+else
+    echo "    not configured now; will retry on first boot with internet"
+fi
+
 echo "==> regenerating initramfs with the final hooks"
 mkinitcpio -P || true
 

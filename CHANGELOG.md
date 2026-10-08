@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.2 — 2026-10-08
+
+* **Hardware drivers install themselves (CachyOS `chwd -a`), including NVIDIA's driver**, which
+  does not fit on the ISO:
+  * on the live USB, `edex-gpu-drivers.service` waits in the background for internet, runs chwd
+    once and shows a notification;
+  * the installer copies what the live session downloaded into the new system and runs chwd
+    there (step "hardware drivers");
+  * if the installer had no internet, the installed system does it on its first boot with a
+    network and asks for a restart afterwards.
+  `sudo chwd -a` repeats it by hand. Automated tests (`edex.ci`) skip it.
+* CI: AUR downloads fall back to GitHub's AUR mirror; package artifacts upload as a tarball; the
+  eDEX-DE bump job no longer fails when Actions may not open pull requests; AUR publishing in
+  eDEX-DE retries.
+
 ## 1.4.1 — 2026-10-02
 
 Ships eDEX-DE 3.3.1.

@@ -1,0 +1,15 @@
+[Unit]
+Description=Install hardware drivers with chwd once online (NVIDIA driver)
+# On the live USB and on an installed system's first boot until it succeeds once.
+ConditionPathExists=!/var/lib/edex-os/gpu-drivers.done
+After=network.target NetworkManager.service pacman-init.service
+Wants=NetworkManager.service
+
+[Service]
+# simple, not oneshot: waiting for a network must never hold up the boot or the login screen.
+Type=simple
+ExecStart=/usr/bin/edex-gpu-drivers --wait
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

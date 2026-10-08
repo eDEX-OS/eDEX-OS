@@ -33,4 +33,12 @@ if [ -d /etc/pacman.d/gnupg ] && [ ! -e "$ROOT/etc/pacman.d/gnupg/pubring.kbx" ]
     rm -rf "$ROOT/etc/pacman.d/gnupg"
     cp -a /etc/pacman.d/gnupg "$ROOT/etc/pacman.d/gnupg"
 fi
+# Drivers the live session already fetched with chwd (edex-gpu-drivers) are reused, so the
+# post-install chwd run needs little or no download.
+if compgen -G "/var/cache/pacman/pkg/*.pkg.tar.zst" >/dev/null; then
+    mkdir -p "$ROOT/var/cache/pacman/pkg" "$ROOT/var/lib/pacman/sync"
+    cp -n /var/cache/pacman/pkg/*.pkg.tar.zst "$ROOT/var/cache/pacman/pkg/" 2>/dev/null || true
+    cp -n /var/lib/pacman/sync/*.db "$ROOT/var/lib/pacman/sync/" 2>/dev/null || true
+    echo "==> seeded the package cache from the live session"
+fi
 echo "==> kernel step done"
